@@ -1,0 +1,29 @@
+{
+  "model": "claude-haiku-5-5",
+  "questions": 20,
+  "repeats": 3,
+  "accuracy_pct": {
+    "full": {
+      "ALL": 100.0,
+      "consistent": 100.0,
+      "breakdown": 100.0,
+      "growth": 100.0,
+      "lookup": 100.0,
+      "ranking": 100.0,
+      "ratio": 100.0,
+      "refuse": 100.0,
+      "total": 100.0
+    },
+    "schema_only": {
+      "ALL": 100.0,
+      "consistent": 100.0,
+      "breakdown": 100.0,
+      "growth": 100.0,
+      "lookup": 100.0,
+      "ranking": 100.0,
+      "ratio": 100.0,
+      "refuse": 100.0,
+      "total": 100.0
+    }
+  }
+}

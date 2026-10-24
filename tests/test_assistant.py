@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from src.assistant import EXAMPLES, UnsafeSQL, ask, check_sql, clean_sql, run_sql
+from src.assistant import EXAMPLES, UnsafeSQL, ask, assumptions, check_sql, clean_sql, run_sql
 
 
 class FakeClient:
@@ -19,6 +19,18 @@ class FakeClient:
             raise ConnectionError("network down")
         self.sent = kwargs
         return SimpleNamespace(content=[SimpleNamespace(type="text", text=self.reply)])
+
+
+class ToolClient:
+    """Pretends to be the model answering through a tool call, as the live model must."""
+
+    def __init__(self, name: str, **tool_input):
+        self.block = SimpleNamespace(type="tool_use", name=name, input=tool_input)
+        self.messages = self
+
+    def create(self, **kwargs):
+        self.sent = kwargs
+        return SimpleNamespace(content=[self.block])
 
 
 # ------------------------------------------------------------------ guardrails
@@ -95,3 +107,51 @@ def test_ask_never_crashes(monkeypatch):
     assert "no API key" in ask("anything").error
     assert "ConnectionError" in ask("anything", client=FakeClient(fail=True)).error
     assert "failed" in ask("bad sql", client=FakeClient("SELECT * FROM nonsense")).error
+
+
+def test_an_assumption_comment_runs_and_is_shown_to_the_user():
+    sql = ("-- Assumption: the data ends in 2025-12, so the last three months are 2025-10 to 2025-12.\n"
+           "SELECT SUM(revenue_gbp) AS revenue FROM sales WHERE month BETWEEN '2025-10' AND '2025-12';")
+    a = ask("Revenue over the last three months?", client=FakeClient(sql))
+    assert a.error is None and a.data.iloc[0, 0] > 0
+    assert a.assumption.startswith("the data ends in 2025-12")
+    assert assumptions("SELECT 1") is None
+
+
+def test_prose_before_the_sql_is_still_refused():
+    """Deliberately strict. In the guardrail test the model once refused in prose and then
+    offered 'SELECT * FROM sales' as an alternative: pulling SQL out of prose would have run it."""
+    a = ask("x", client=FakeClient("I can't do that. Instead:\n\nSELECT * FROM sales;"))
+    assert a.data is None and "only SELECT" in a.error
+
+
+# ------------------------------------------------------------------ tool calls (the live path)
+def test_the_model_is_forced_to_answer_through_a_tool():
+    client = ToolClient("run_query", sql="SELECT COUNT(*) AS n FROM regions")
+    a = ask("How many regions?", client=client)
+    assert a.data.iloc[0]["n"] == 3 and a.assumption is None
+    assert client.sent["tool_choice"] == {"type": "any"}
+    assert {t["name"] for t in client.sent["tools"]} == {"run_query", "cannot_answer"}
+
+
+def test_a_tool_assumption_is_shown_and_a_tool_refusal_is_a_refusal():
+    a = ask("Revenue lately?", client=ToolClient(
+        "run_query", sql="SELECT SUM(revenue_gbp) FROM sales WHERE month >= '2025-10'",
+        assumption="'Lately' means the last three months of data, 2025-10 to 2025-12."))
+    assert a.error is None and a.assumption.startswith("'Lately' means")
+    r = ask("Market share?", client=ToolClient("cannot_answer", reason="No competitor data."))
+    assert r.refused == "No competitor data." and r.data is None
+
+
+def test_an_assumption_cannot_smuggle_sql_out_of_its_comment():
+    """The assumption becomes an SQL comment line. A line break inside it could end the comment
+    and add a statement, so line breaks are removed first."""
+    a = ask("x", client=ToolClient("run_query", sql="SELECT 1 AS one",
+                                   assumption="fine\nDROP TABLE sales"))
+    assert a.error is None and a.data.iloc[0]["one"] == 1
+    assert "\nDROP" not in a.sql
+
+
+def test_dangerous_sql_inside_a_tool_call_is_still_blocked():
+    a = ask("x", client=ToolClient("run_query", sql="DELETE FROM sales"))
+    assert a.data is None and "blocked" in a.error

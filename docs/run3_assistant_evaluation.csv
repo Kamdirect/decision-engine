@@ -1,0 +1,1487 @@
+prompt,id,tier,kind,run,correct,outcome,detail,question,sql,assumption
+schema_only,q01,core,total,1,True,correct,,What was total revenue in 2025?,"SELECT SUM(revenue_gbp) AS total_revenue_gbp_2025
+FROM sales
+WHERE month >= '2025-01' AND month <= '2025-12';",
+schema_only,q01,core,total,2,True,correct,,What was total revenue in 2025?,"SELECT SUM(revenue_gbp) AS total_revenue_gbp
+FROM sales
+WHERE month >= '2025-01' AND month <= '2025-12';",
+schema_only,q01,core,total,3,True,correct,,What was total revenue in 2025?,"SELECT SUM(revenue_gbp) AS total_revenue_gbp_2025
+FROM sales
+WHERE month >= '2025-01' AND month <= '2025-12';",
+schema_only,q02,core,total,1,True,correct,,How many cases did we sell in 2023?,SELECT SUM(volume_cases) AS cases_sold_2023 FROM sales WHERE month >= '2023-01' AND month <= '2023-12';,
+schema_only,q02,core,total,2,True,correct,,How many cases did we sell in 2023?,"-- Assumption: ""2023"" means calendar year 2023, months 2023-01 to 2023-12, all regions and products.
+SELECT SUM(volume_cases) AS total_cases_2023
+FROM sales
+WHERE month >= '2023-01' AND month <= '2023-12';","""2023"" means calendar year 2023, months 2023-01 to 2023-12, all regions and products."
+schema_only,q02,core,total,3,True,correct,,How many cases did we sell in 2023?,"SELECT SUM(volume_cases) AS total_cases_2023
+FROM sales
+WHERE month >= '2023-01' AND month <= '2023-12';",
+schema_only,q03,core,total,1,True,correct,,How many products are still listed today?,"-- Assumption: ""today"" is the end of the data, 2025-12, so a product is still listed if delist_after is NULL or on or after 2025-12.
+SELECT COUNT(*) AS products_still_listed
+FROM products
+WHERE delist_after IS NULL OR delist_after >= '2025-12';","""today"" is the end of the data, 2025-12, so a product is still listed if delist_after is NULL or on or after 2025-12."
+schema_only,q03,core,total,2,True,correct,,How many products are still listed today?,"-- Assumption: ""today"" is the end of the data, 2025-12, so a product is still listed if delist_after is NULL or delist_after is 2025-12 or later.
+SELECT COUNT(*) AS products_still_listed
+FROM products
+WHERE delist_after IS NULL OR delist_after >= '2025-12';","""today"" is the end of the data, 2025-12, so a product is still listed if delist_after is NULL or delist_after is 2025-12 or later."
+schema_only,q03,core,total,3,True,correct,,How many products are still listed today?,"-- Assumption: ""today"" is the end of the data, 2025-12, so a product is still listed if delist_after is NULL or on or after 2025-12.
+SELECT COUNT(*) AS products_still_listed
+FROM products
+WHERE delist_after IS NULL OR delist_after >= '2025-12';","""today"" is the end of the data, 2025-12, so a product is still listed if delist_after is NULL or on or after 2025-12."
+schema_only,q04,core,ranking,1,True,correct,,Which category had the highest revenue in 2025?,"SELECT p.category, SUM(s.revenue_gbp) AS total_revenue_gbp
+FROM sales s
+JOIN products p ON p.product_id = s.product_id
+WHERE s.month LIKE '2025-%'
+GROUP BY p.category
+ORDER BY total_revenue_gbp DESC
+LIMIT 1;",
+schema_only,q04,core,ranking,2,True,correct,,Which category had the highest revenue in 2025?,"SELECT p.category, SUM(s.revenue_gbp) AS total_revenue_gbp
+FROM sales s
+JOIN products p ON p.product_id = s.product_id
+WHERE s.month LIKE '2025-%'
+GROUP BY p.category
+ORDER BY total_revenue_gbp DESC
+LIMIT 1;",
+schema_only,q04,core,ranking,3,True,correct,,Which category had the highest revenue in 2025?,"SELECT p.category, SUM(s.revenue_gbp) AS total_revenue_gbp
+FROM sales s
+JOIN products p ON p.product_id = s.product_id
+WHERE s.month >= '2025-01' AND s.month <= '2025-12'
+GROUP BY p.category
+ORDER BY total_revenue_gbp DESC
+LIMIT 1;",
+schema_only,q05,core,ranking,1,True,correct,,What were the top 5 products by volume in 2025?,"SELECT p.product_id, p.product_name, p.category, SUM(s.volume_cases) AS total_volume_cases FROM sales s JOIN products p ON p.product_id = s.product_id WHERE s.month >= '2025-01' AND s.month <= '2025-12' GROUP BY p.product_id, p.product_name, p.category ORDER BY total_volume_cases DESC LIMIT 5;",
+schema_only,q05,core,ranking,2,True,correct,,What were the top 5 products by volume in 2025?,"SELECT p.product_name, SUM(s.volume_cases) AS total_volume_cases FROM sales s JOIN products p ON p.product_id = s.product_id WHERE s.month LIKE '2025-%' GROUP BY p.product_id, p.product_name ORDER BY total_volume_cases DESC LIMIT 5;",
+schema_only,q05,core,ranking,3,True,correct,,What were the top 5 products by volume in 2025?,"SELECT p.product_name, SUM(s.volume_cases) AS total_volume_cases
+FROM sales s
+JOIN products p ON p.product_id = s.product_id
+WHERE s.month >= '2025-01' AND s.month <= '2025-12'
+GROUP BY p.product_id, p.product_name
+ORDER BY total_volume_cases DESC
+LIMIT 5;",
+schema_only,q06,core,ranking,1,True,correct,,Which region sold the fewest cases in Q1 2025?,"-- Assumption: Q1 2025 is months 2025-01 to 2025-03.
+SELECT r.region_name, SUM(s.volume_cases) AS total_cases
+FROM sales s
+JOIN regions r ON r.region_id = s.region_id
+WHERE s.month BETWEEN '2025-01' AND '2025-03'
+GROUP BY r.region_id, r.region_name
+ORDER BY total_cases ASC
+LIMIT 1;",Q1 2025 is months 2025-01 to 2025-03.
+schema_only,q06,core,ranking,2,True,correct,,Which region sold the fewest cases in Q1 2025?,"-- Assumption: Q1 2025 is months 2025-01 to 2025-03.
+SELECT r.region_name, SUM(s.volume_cases) AS total_cases
+FROM sales s
+JOIN regions r ON r.region_id = s.region_id
+WHERE s.month BETWEEN '2025-01' AND '2025-03'
+GROUP BY r.region_id, r.region_name
+ORDER BY total_cases ASC
+LIMIT 1;",Q1 2025 is months 2025-01 to 2025-03.
+schema_only,q06,core,ranking,3,True,correct,,Which region sold the fewest cases in Q1 2025?,"-- Assumption: Q1 2025 is months 2025-01 to 2025-03.
+SELECT r.region_name, SUM(s.volume_cases) AS total_cases
+FROM sales s
+JOIN regions r ON r.region_id = s.region_id
+WHERE s.month BETWEEN '2025-01' AND '2025-03'
+GROUP BY r.region_id, r.region_name
+ORDER BY total_cases ASC
+LIMIT 1;",Q1 2025 is months 2025-01 to 2025-03.
+schema_only,q07,core,ranking,1,True,correct,,Which month of 2024 had the highest sales volume?,"SELECT month, SUM(volume_cases) AS total_volume_cases FROM sales WHERE month LIKE '2024-%' GROUP BY month ORDER BY total_volume_cases DESC LIMIT 1;",
+schema_only,q07,core,ranking,2,True,correct,,Which month of 2024 had the highest sales volume?,"SELECT month, SUM(volume_cases) AS total_volume_cases FROM sales WHERE month BETWEEN '2024-01' AND '2024-12' GROUP BY month ORDER BY total_volume_cases DESC LIMIT 1;",
+schema_only,q07,core,ranking,3,True,correct,,Which month of 2024 had the highest sales volume?,"SELECT month, SUM(volume_cases) AS total_volume_cases FROM sales WHERE month LIKE '2024-%' GROUP BY month ORDER BY total_volume_cases DESC LIMIT 1;",
+schema_only,q08,core,breakdown,1,True,correct,,Show revenue by region for 2024.,"SELECT r.region_name, SUM(s.revenue_gbp) AS total_revenue_gbp
+FROM sales s
+JOIN regions r ON r.region_id = s.region_id
+WHERE s.month >= '2024-01' AND s.month <= '2024-12'
+GROUP BY r.region_name
+ORDER BY total_revenue_gbp DESC;",
+schema_only,q08,core,breakdown,2,True,correct,,Show revenue by region for 2024.,"SELECT r.region_name, SUM(s.revenue_gbp) AS total_revenue_gbp
+FROM sales s
+JOIN regions r ON s.region_id = r.region_id
+WHERE s.month >= '2024-01' AND s.month <= '2024-12'
+GROUP BY r.region_name
+ORDER BY total_revenue_gbp DESC;",
+schema_only,q08,core,breakdown,3,True,correct,,Show revenue by region for 2024.,"-- Assumption: ""2024"" means calendar year 2024, months 2024-01 to 2024-12, and revenue is the sum of revenue_gbp from the sales table.
+SELECT r.region_name, SUM(s.revenue_gbp) AS total_revenue_gbp
+FROM sales s
+JOIN regions r ON r.region_id = s.region_id
+WHERE s.month >= '2024-01' AND s.month <= '2024-12'
+GROUP BY r.region_name
+ORDER BY total_revenue_gbp DESC;","""2024"" means calendar year 2024, months 2024-01 to 2024-12, and revenue is the sum of revenue_gbp from the sales table."
+schema_only,q09,core,breakdown,1,True,correct,,Show total volume for each month of 2025.,"SELECT month, SUM(volume_cases) AS total_volume_cases
+FROM sales
+WHERE month >= '2025-01' AND month <= '2025-12'
+GROUP BY month
+ORDER BY month;",
+schema_only,q09,core,breakdown,2,True,correct,,Show total volume for each month of 2025.,"SELECT month, SUM(volume_cases) AS total_volume_cases
+FROM sales
+WHERE month >= '2025-01' AND month <= '2025-12'
+GROUP BY month
+ORDER BY month;",
+schema_only,q09,core,breakdown,3,True,correct,,Show total volume for each month of 2025.,"SELECT month, SUM(volume_cases) AS total_volume_cases FROM sales WHERE month >= '2025-01' AND month <= '2025-12' GROUP BY month ORDER BY month;",
+schema_only,q10,core,breakdown,1,True,correct,,What was revenue by category in Q4 2025?,"-- Assumption: Q4 2025 is the three months 2025-10 to 2025-12, and revenue is summed from the sales table joined to products for category.
+SELECT p.category, SUM(s.revenue_gbp) AS revenue_gbp
+FROM sales s
+JOIN products p ON p.product_id = s.product_id
+WHERE s.month BETWEEN '2025-10' AND '2025-12'
+GROUP BY p.category
+ORDER BY revenue_gbp DESC;","Q4 2025 is the three months 2025-10 to 2025-12, and revenue is summed from the sales table joined to products for category."
+schema_only,q10,core,breakdown,2,True,correct,,What was revenue by category in Q4 2025?,"-- Assumption: Q4 2025 is the months 2025-10 to 2025-12, and revenue is summed from the sales table by product category.
+SELECT p.category, SUM(s.revenue_gbp) AS revenue_gbp
+FROM sales s
+JOIN products p ON p.product_id = s.product_id
+WHERE s.month BETWEEN '2025-10' AND '2025-12'
+GROUP BY p.category
+ORDER BY revenue_gbp DESC;","Q4 2025 is the months 2025-10 to 2025-12, and revenue is summed from the sales table by product category."
+schema_only,q10,core,breakdown,3,True,correct,,What was revenue by category in Q4 2025?,"-- Assumption: Q4 2025 means the months 2025-10 to 2025-12, and revenue is taken from the sales table joined to products for category.
+SELECT p.category, SUM(s.revenue_gbp) AS revenue_gbp
+FROM sales s
+JOIN products p ON p.product_id = s.product_id
+WHERE s.month BETWEEN '2025-10' AND '2025-12'
+GROUP BY p.category
+ORDER BY revenue_gbp DESC;","Q4 2025 means the months 2025-10 to 2025-12, and revenue is taken from the sales table joined to products for category."
+schema_only,q11,core,growth,1,True,correct,,By what percent did Energy revenue grow from 2024 to 2025?,"-- Assumption: ""Energy revenue"" means all regions combined, and growth compares full-year 2025 with full-year 2024 (calendar years, all months in the data).
+WITH yearly AS (
+  SELECT substr(s.month, 1, 4) AS yr, SUM(s.revenue_gbp) AS revenue
+  FROM sales s
+  JOIN products p ON p.product_id = s.product_id
+  WHERE p.category = 'Energy'
+    AND substr(s.month, 1, 4) IN ('2024', '2025')
+  GROUP BY substr(s.month, 1, 4)
+)
+SELECT
+  ROUND(100.0 * (SUM(CASE WHEN yr = '2025' THEN revenue END)
+               - SUM(CASE WHEN yr = '2024' THEN revenue END))
+        / SUM(CASE WHEN yr = '2024' THEN revenue END), 2) AS growth_pct
+FROM yearly;","""Energy revenue"" means all regions combined, and growth compares full-year 2025 with full-year 2024 (calendar years, all months in the data)."
+schema_only,q11,core,growth,2,True,correct,,By what percent did Energy revenue grow from 2024 to 2025?,"-- Assumption: ""Energy revenue"" means total revenue_gbp for products in the Energy category across all regions; growth compares full calendar year 2025 to full calendar year 2024.
+SELECT ROUND(100.0 * (SUM(CASE WHEN substr(s.month,1,4) = '2025' THEN s.revenue_gbp ELSE 0 END) - SUM(CASE WHEN substr(s.month,1,4) = '2024' THEN s.revenue_gbp ELSE 0 END)) / SUM(CASE WHEN substr(s.month,1,4) = '2024' THEN s.revenue_gbp ELSE 0 END), 2) AS energy_revenue_growth_pct FROM sales s JOIN products p ON p.product_id = s.product_id WHERE p.category = 'Energy' AND substr(s.month,1,4) IN ('2024','2025');","""Energy revenue"" means total revenue_gbp for products in the Energy category across all regions; growth compares full calendar year 2025 to full calendar year 2024."
+schema_only,q11,core,growth,3,True,correct,,By what percent did Energy revenue grow from 2024 to 2025?,"-- Assumption: ""2024"" and ""2025"" refer to calendar years, comparing total Energy revenue across all regions for each year.
+WITH energy_by_year AS (
+    SELECT substr(s.month, 1, 4) AS yr,
+           SUM(s.revenue_gbp) AS revenue
+    FROM sales s
+    JOIN products p ON p.product_id = s.product_id
+    WHERE p.category = 'Energy'
+      AND substr(s.month, 1, 4) IN ('2024', '2025')
+    GROUP BY substr(s.month, 1, 4)
+)
+SELECT ROUND(
+         100.0 * (
+           (SELECT revenue FROM energy_by_year WHERE yr = '2025')
+           - (SELECT revenue FROM energy_by_year WHERE yr = '2024')
+         ) / (SELECT revenue FROM energy_by_year WHERE yr = '2024'),
+         2) AS revenue_growth_pct;","""2024"" and ""2025"" refer to calendar years, comparing total Energy revenue across all regions for each year."
+schema_only,q12,core,growth,1,True,correct,,"How did Carbonated volume in the South in July 2024 compare with July 2023, in percent?","-- Assumption: ""July 2024"" and ""July 2023"" are the months 2024-07 and 2023-07 as stored in the month column, and the comparison is (2024 volume - 2023 volume) / 2023 volume x 100.
+WITH v AS (
+  SELECT s.month, SUM(s.volume_cases) AS volume_cases
+  FROM sales s
+  JOIN regions r ON r.region_id = s.region_id
+  JOIN products p ON p.product_id = s.product_id
+  WHERE r.region_name = 'South'
+    AND p.category = 'Carbonated'
+    AND s.month IN ('2023-07', '2024-07')
+  GROUP BY s.month
+)
+SELECT
+  (SELECT volume_cases FROM v WHERE month = '2023-07') AS volume_2023_07,
+  (SELECT volume_cases FROM v WHERE month = '2024-07') AS volume_2024_07,
+  ROUND(
+    100.0 * ((SELECT volume_cases FROM v WHERE month = '2024-07') - (SELECT volume_cases FROM v WHERE month = '2023-07'))
+    / (SELECT volume_cases FROM v WHERE month = '2023-07'),
+    2
+  ) AS pct_change;","""July 2024"" and ""July 2023"" are the months 2024-07 and 2023-07 as stored in the month column, and the comparison is (2024 volume - 2023 volume) / 2023 volume x 100."
+schema_only,q12,core,growth,2,True,correct,,"How did Carbonated volume in the South in July 2024 compare with July 2023, in percent?","-- Assumption: ""South"" refers to region_name = 'South' in the regions table; July 2024 and July 2023 are months '2024-07' and '2023-07'.
+WITH v AS (
+  SELECT s.month, SUM(s.volume_cases) AS volume
+  FROM sales s
+  JOIN products p ON p.product_id = s.product_id
+  JOIN regions r ON r.region_id = s.region_id
+  WHERE r.region_name = 'South'
+    AND p.category = 'Carbonated'
+    AND s.month IN ('2023-07', '2024-07')
+  GROUP BY s.month
+)
+SELECT
+  (SELECT volume FROM v WHERE month = '2023-07') AS volume_jul_2023,
+  (SELECT volume FROM v WHERE month = '2024-07') AS volume_jul_2024,
+  ROUND(100.0 * ((SELECT volume FROM v WHERE month = '2024-07') - (SELECT volume FROM v WHERE month = '2023-07'))
+        / (SELECT volume FROM v WHERE month = '2023-07'), 2) AS pct_change;","""South"" refers to region_name = 'South' in the regions table; July 2024 and July 2023 are months '2024-07' and '2023-07'."
+schema_only,q12,core,growth,3,True,correct,,"How did Carbonated volume in the South in July 2024 compare with July 2023, in percent?","-- Assumption: ""South"" refers to region_name = 'South' in the regions table, and ""July"" refers to months '2023-07' and '2024-07'.
+WITH vol AS (
+    SELECT s.month, SUM(s.volume_cases) AS total_volume
+    FROM sales s
+    JOIN regions r ON r.region_id = s.region_id
+    JOIN products p ON p.product_id = s.product_id
+    WHERE r.region_name = 'South'
+      AND p.category = 'Carbonated'
+      AND s.month IN ('2023-07', '2024-07')
+    GROUP BY s.month
+)
+SELECT
+    (SELECT total_volume FROM vol WHERE month = '2023-07') AS volume_jul_2023,
+    (SELECT total_volume FROM vol WHERE month = '2024-07') AS volume_jul_2024,
+    ROUND(
+        100.0 * ((SELECT total_volume FROM vol WHERE month = '2024-07')
+               - (SELECT total_volume FROM vol WHERE month = '2023-07'))
+        / (SELECT total_volume FROM vol WHERE month = '2023-07'),
+        2
+    ) AS pct_change;","""South"" refers to region_name = 'South' in the regions table, and ""July"" refers to months '2023-07' and '2024-07'."
+schema_only,q13,core,ratio,1,True,correct,,"What share of 2025 revenue came from sales on promotion, in percent?","-- Assumption: ""2025"" means months 2025-01 to 2025-12, and ""share on promotion"" is revenue where on_promotion = 1 divided by total revenue for the year.
+SELECT ROUND(100.0 * SUM(CASE WHEN on_promotion = 1 THEN revenue_gbp ELSE 0 END) / SUM(revenue_gbp), 2) AS promo_revenue_share_pct FROM sales WHERE month >= '2025-01' AND month <= '2025-12';","""2025"" means months 2025-01 to 2025-12, and ""share on promotion"" is revenue where on_promotion = 1 divided by total revenue for the year."
+schema_only,q13,core,ratio,2,True,correct,,"What share of 2025 revenue came from sales on promotion, in percent?","-- Assumption: ""2025 revenue"" means all sales rows with month beginning '2025-', and ""on promotion"" means on_promotion = 1 in the sales table.
+SELECT ROUND(100.0 * SUM(CASE WHEN on_promotion = 1 THEN revenue_gbp ELSE 0 END) / SUM(revenue_gbp), 2) AS promo_revenue_share_pct FROM sales WHERE month LIKE '2025-%';","""2025 revenue"" means all sales rows with month beginning '2025-', and ""on promotion"" means on_promotion = 1 in the sales table."
+schema_only,q13,core,ratio,3,True,correct,,"What share of 2025 revenue came from sales on promotion, in percent?","-- Assumption: ""2025"" means months 2025-01 to 2025-12, and revenue_gbp in the sales table is the amount actually realised (post-discount), so the share is on_promotion revenue divided by total revenue for those months.
+SELECT ROUND(100.0 * SUM(CASE WHEN on_promotion = 1 THEN revenue_gbp ELSE 0 END) / SUM(revenue_gbp), 2) AS promo_revenue_share_pct FROM sales WHERE month >= '2025-01' AND month <= '2025-12';","""2025"" means months 2025-01 to 2025-12, and revenue_gbp in the sales table is the amount actually realised (post-discount), so the share is on_promotion revenue divided by total revenue for those months."
+schema_only,q14,core,ratio,1,True,correct,,What was the average revenue per case for each category in 2025?,"-- Assumption: ""revenue per case"" is total revenue divided by total volume in cases, aggregated across all regions and products in each category for 2025.
+SELECT p.category,
+       SUM(s.revenue_gbp) * 1.0 / SUM(s.volume_cases) AS avg_revenue_per_case_gbp
+FROM sales s
+JOIN products p ON p.product_id = s.product_id
+WHERE s.month >= '2025-01' AND s.month <= '2025-12'
+GROUP BY p.category;","""revenue per case"" is total revenue divided by total volume in cases, aggregated across all regions and products in each category for 2025."
+schema_only,q14,core,ratio,2,True,correct,,What was the average revenue per case for each category in 2025?,"-- Assumption: ""average revenue per case"" is total revenue divided by total volume in cases, weighted across all sales rows, not a simple average of per-row ratios.
+SELECT p.category,
+       SUM(s.revenue_gbp) * 1.0 / SUM(s.volume_cases) AS avg_revenue_per_case_gbp
+FROM sales s
+JOIN products p ON p.product_id = s.product_id
+WHERE s.month >= '2025-01' AND s.month <= '2025-12'
+GROUP BY p.category
+ORDER BY p.category;","""average revenue per case"" is total revenue divided by total volume in cases, weighted across all sales rows, not a simple average of per-row ratios."
+schema_only,q14,core,ratio,3,True,correct,,What was the average revenue per case for each category in 2025?,"-- Assumption: ""average revenue per case"" = total revenue divided by total volume_cases, by category, for months in 2025 (month LIKE '2025-%').
+SELECT p.category,
+       SUM(s.revenue_gbp) * 1.0 / SUM(s.volume_cases) AS avg_revenue_per_case_gbp
+FROM sales s
+JOIN products p ON p.product_id = s.product_id
+WHERE s.month LIKE '2025-%'
+GROUP BY p.category
+ORDER BY p.category;","""average revenue per case"" = total revenue divided by total volume_cases, by category, for months in 2025 (month LIKE '2025-%')."
+schema_only,q15,core,lookup,1,True,correct,,Which products were launched in 2024?,"SELECT product_id, product_name, category, list_price_gbp, launch_month, delist_after FROM products WHERE launch_month LIKE '2024-%' ORDER BY launch_month, product_name;",
+schema_only,q15,core,lookup,2,True,correct,,Which products were launched in 2024?,"SELECT product_id, product_name, category, list_price_gbp, launch_month, delist_after FROM products WHERE launch_month >= '2024-01' AND launch_month <= '2024-12' ORDER BY launch_month, product_name;",
+schema_only,q15,core,lookup,3,True,correct,,Which products were launched in 2024?,"SELECT product_id, product_name, category, list_price_gbp, launch_month, delist_after FROM products WHERE launch_month >= '2024-01' AND launch_month <= '2024-12' ORDER BY launch_month, product_name;",
+schema_only,q16,core,lookup,1,True,correct,,"Which product was delisted, and what was its last month on sale?","SELECT product_name, delist_after AS last_month_on_sale FROM products WHERE delist_after IS NOT NULL ORDER BY delist_after DESC;",
+schema_only,q16,core,lookup,2,True,correct,,"Which product was delisted, and what was its last month on sale?","SELECT product_name, delist_after AS last_month_on_sale FROM products WHERE delist_after IS NOT NULL ORDER BY delist_after DESC;",
+schema_only,q16,core,lookup,3,True,correct,,"Which product was delisted, and what was its last month on sale?","SELECT product_name, delist_after AS last_month_on_sale FROM products WHERE delist_after IS NOT NULL ORDER BY delist_after DESC;",
+schema_only,q17,core,lookup,1,True,correct,,"How many promotions were planned in 2025, and what was their average discount?","-- Assumption: ""promotions planned in 2025"" means rows in the promotions calendar whose month falls in 2025, and each row is one planned promotion.
+SELECT COUNT(*) AS planned_promotions, AVG(discount_pct) AS average_discount_pct FROM promotions WHERE month >= '2025-01' AND month <= '2025-12';","""promotions planned in 2025"" means rows in the promotions calendar whose month falls in 2025, and each row is one planned promotion."
+schema_only,q17,core,lookup,2,True,correct,,"How many promotions were planned in 2025, and what was their average discount?","-- Assumption: ""promotions planned in 2025"" counts rows in the promotions calendar with a month in 2025 (2025-01 to 2025-12).
+SELECT COUNT(*) AS promotions_planned, AVG(discount_pct) AS avg_discount_pct FROM promotions WHERE month >= '2025-01' AND month <= '2025-12';","""promotions planned in 2025"" counts rows in the promotions calendar with a month in 2025 (2025-01 to 2025-12)."
+schema_only,q17,core,lookup,3,True,correct,,"How many promotions were planned in 2025, and what was their average discount?","SELECT COUNT(*) AS planned_promotions, AVG(discount_pct) AS avg_discount_pct FROM promotions WHERE month >= '2025-01' AND month <= '2025-12';",
+schema_only,q18,core,refuse,1,True,correct,"The schema has no customer table or customer identifier; sales are recorded only by month, region and product, so individual customers cannot be identified.",Which customer bought the most Cola 330ml in 2025?,,
+schema_only,q18,core,refuse,2,True,correct,"The schema has no customer table or customer identifier; sales are recorded by month, region and product only, so individual customers cannot be identified.",Which customer bought the most Cola 330ml in 2025?,,
+schema_only,q18,core,refuse,3,True,correct,"The schema has no customer table or customer identifier; sales are recorded only by month, region and product, so buyers cannot be identified.",Which customer bought the most Cola 330ml in 2025?,,
+schema_only,q19,core,refuse,1,True,correct,"The database has no weather data, so hot-weather effects cannot be isolated from sales figures.",How much did hot weather increase Water sales last summer?,,
+schema_only,q19,core,refuse,2,True,correct,"The database has no weather data, so hot-weather effects on Water sales cannot be measured from it.",How much did hot weather increase Water sales last summer?,,
+schema_only,q19,core,refuse,3,True,correct,"The database has no weather data, so hot weather's effect on Water sales cannot be measured from it.",How much did hot weather increase Water sales last summer?,,
+schema_only,q20,core,refuse,1,True,correct,"The database has no store-level data; sales are tracked by region and product only, so the number of stores stocking Energy Original 250ml cannot be determined.",How many stores stock Energy Original 250ml?,,
+schema_only,q20,core,refuse,2,True,correct,"The schema has no store-level data; sales and promotions are recorded only by region (North, Central, South), so the number of stores stocking the product cannot be determined.",How many stores stock Energy Original 250ml?,,
+schema_only,q20,core,refuse,3,True,correct,"The database tracks sales by region and product, not by store, so the number of stores stocking Energy Original 250ml cannot be determined.",How many stores stock Energy Original 250ml?,,
+schema_only,h01,hard,aggregation-level,1,True,correct,,What was the average monthly volume for each region in 2025?,"SELECT r.region_name, AVG(m.monthly_volume) AS avg_monthly_volume_cases
+FROM regions r
+JOIN (
+    SELECT month, region_id, SUM(volume_cases) AS monthly_volume
+    FROM sales
+    WHERE month >= '2025-01' AND month <= '2025-12'
+    GROUP BY month, region_id
+) m ON m.region_id = r.region_id
+GROUP BY r.region_name
+ORDER BY r.region_name;",
+schema_only,h01,hard,aggregation-level,2,True,correct,,What was the average monthly volume for each region in 2025?,"SELECT r.region_name, AVG(m.monthly_volume) AS avg_monthly_volume_cases
+FROM regions r
+JOIN (
+    SELECT region_id, month, SUM(volume_cases) AS monthly_volume
+    FROM sales
+    WHERE month >= '2025-01' AND month <= '2025-12'
+    GROUP BY region_id, month
+) m ON m.region_id = r.region_id
+GROUP BY r.region_id, r.region_name
+ORDER BY r.region_name;",
+schema_only,h01,hard,aggregation-level,3,True,correct,,What was the average monthly volume for each region in 2025?,"SELECT r.region_name, AVG(m.monthly_volume) AS avg_monthly_volume_cases
+FROM regions r
+JOIN (
+    SELECT region_id, month, SUM(volume_cases) AS monthly_volume
+    FROM sales
+    WHERE month LIKE '2025-%'
+    GROUP BY region_id, month
+) m ON m.region_id = r.region_id
+GROUP BY r.region_id, r.region_name
+ORDER BY r.region_name;",
+schema_only,h02,hard,aggregation-level,1,True,correct,,How many different products were promoted in 2025?,"-- Assumption: ""promoted in 2025"" means at least one promotions row with a month in 2025, counted as distinct products.
+SELECT COUNT(DISTINCT product_id) AS promoted_products_2025
+FROM promotions
+WHERE month LIKE '2025-%';","""promoted in 2025"" means at least one promotions row with a month in 2025, counted as distinct products."
+schema_only,h02,hard,aggregation-level,2,True,correct,,How many different products were promoted in 2025?,"SELECT COUNT(DISTINCT product_id) AS promoted_products_2025
+FROM promotions
+WHERE month >= '2025-01' AND month <= '2025-12';",
+schema_only,h02,hard,aggregation-level,3,True,correct,,How many different products were promoted in 2025?,"-- Assumption: ""promoted in 2025"" means at least one promotions row with a month in 2025, counted as distinct products.
+SELECT COUNT(DISTINCT product_id) AS promoted_products_2025
+FROM promotions
+WHERE month LIKE '2025-%';","""promoted in 2025"" means at least one promotions row with a month in 2025, counted as distinct products."
+schema_only,h03,hard,aggregation-level,1,True,correct,,"What share of the South's 2025 volume came from Carbonated drinks, in percent?","-- Assumption: ""South"" is region_name 'South' in the regions table, and 2025 means months '2025-01' through '2025-12' in the sales table.
+SELECT ROUND(100.0 * SUM(CASE WHEN p.category = 'Carbonated' THEN s.volume_cases ELSE 0 END) / SUM(s.volume_cases), 2) AS carbonated_volume_share_pct
+FROM sales s
+JOIN regions r ON s.region_id = r.region_id
+JOIN products p ON s.product_id = p.product_id
+WHERE r.region_name = 'South'
+  AND s.month >= '2025-01' AND s.month <= '2025-12';","""South"" is region_name 'South' in the regions table, and 2025 means months '2025-01' through '2025-12' in the sales table."
+schema_only,h03,hard,aggregation-level,2,True,correct,,"What share of the South's 2025 volume came from Carbonated drinks, in percent?","-- Assumption: ""2025"" means months 2025-01 to 2025-12, and ""the South"" is the region named 'South' in the regions table.
+SELECT ROUND(100.0 * SUM(CASE WHEN p.category = 'Carbonated' THEN s.volume_cases ELSE 0 END) / SUM(s.volume_cases), 2) AS carbonated_volume_share_pct
+FROM sales s
+JOIN products p ON p.product_id = s.product_id
+JOIN regions r ON r.region_id = s.region_id
+WHERE r.region_name = 'South'
+  AND s.month >= '2025-01' AND s.month <= '2025-12';","""2025"" means months 2025-01 to 2025-12, and ""the South"" is the region named 'South' in the regions table."
+schema_only,h03,hard,aggregation-level,3,True,correct,,"What share of the South's 2025 volume came from Carbonated drinks, in percent?","-- Assumption: ""2025"" means months 2025-01 to 2025-12, and ""South"" is the region_name 'South' in the regions table.
+SELECT ROUND(100.0 * SUM(CASE WHEN p.category = 'Carbonated' THEN s.volume_cases ELSE 0 END) / SUM(s.volume_cases), 2) AS carbonated_volume_share_pct
+FROM sales s
+JOIN regions r ON r.region_id = s.region_id
+JOIN products p ON p.product_id = s.product_id
+WHERE r.region_name = 'South'
+  AND s.month >= '2025-01' AND s.month <= '2025-12';","""2025"" means months 2025-01 to 2025-12, and ""South"" is the region_name 'South' in the regions table."
+schema_only,h04,hard,time,1,True,correct,,What was total revenue over the last three months?,"-- Assumption: the data ends in 2025-12, so the last three months are 2025-10 to 2025-12.
+SELECT SUM(revenue_gbp) AS total_revenue_gbp
+FROM sales
+WHERE month >= '2025-10' AND month <= '2025-12';","the data ends in 2025-12, so the last three months are 2025-10 to 2025-12."
+schema_only,h04,hard,time,2,True,correct,,What was total revenue over the last three months?,"-- Assumption: the data ends in 2025-12, so the last three months are 2025-10 to 2025-12.
+SELECT SUM(revenue_gbp) AS total_revenue_gbp
+FROM sales
+WHERE month BETWEEN '2025-10' AND '2025-12';","the data ends in 2025-12, so the last three months are 2025-10 to 2025-12."
+schema_only,h04,hard,time,3,True,correct,,What was total revenue over the last three months?,"-- Assumption: the data ends in 2025-12, so the last three months are 2025-10 to 2025-12.
+SELECT SUM(revenue_gbp) AS total_revenue_gbp
+FROM sales
+WHERE month >= '2025-10' AND month <= '2025-12';","the data ends in 2025-12, so the last three months are 2025-10 to 2025-12."
+schema_only,h05,hard,time,1,True,correct,,Which month in 2025 had the biggest month-on-month increase in total volume?,"-- Assumption: ""total volume"" is the sum of volume_cases across all regions and products per month; month-on-month increase compares each 2025 month to the previous month, so 2025-01 is compared with 2024-12.
+WITH monthly AS (
+    SELECT month, SUM(volume_cases) AS total_volume
+    FROM sales
+    WHERE month >= '2024-12' AND month <= '2025-12'
+    GROUP BY month
+),
+diffs AS (
+    SELECT month,
+           total_volume - LAG(total_volume) OVER (ORDER BY month) AS mom_increase
+    FROM monthly
+)
+SELECT month, mom_increase
+FROM diffs
+WHERE month >= '2025-01' AND mom_increase IS NOT NULL
+ORDER BY mom_increase DESC
+LIMIT 1;","""total volume"" is the sum of volume_cases across all regions and products per month; month-on-month increase compares each 2025 month to the previous month, so 2025-01 is compared with 2024-12."
+schema_only,h05,hard,time,2,True,correct,,Which month in 2025 had the biggest month-on-month increase in total volume?,"-- Assumption: ""total volume"" means the sum of volume_cases across all regions and products per month, and ""month-on-month increase"" is the change from the prior month, compared only for months in 2025 (so 2025-01 is compared against 2024-12).
+
+WITH monthly_totals AS (
+    SELECT month, SUM(volume_cases) AS total_volume
+    FROM sales
+    WHERE month >= '2024-12' AND month <= '2025-12'
+    GROUP BY month
+),
+changes AS (
+    SELECT month,
+           total_volume - LAG(total_volume) OVER (ORDER BY month) AS mom_increase
+    FROM monthly_totals
+)
+SELECT month, mom_increase
+FROM changes
+WHERE month >= '2025-01' AND mom_increase IS NOT NULL
+ORDER BY mom_increase DESC
+LIMIT 1;","""total volume"" means the sum of volume_cases across all regions and products per month, and ""month-on-month increase"" is the change from the prior month, compared only for months in 2025 (so 2025-01 is compared against 2024-12)."
+schema_only,h05,hard,time,3,True,correct,,Which month in 2025 had the biggest month-on-month increase in total volume?,"-- Assumption: ""total volume"" means the sum of volume_cases across all regions and products for each month, and month-on-month increase is the change from the prior month, so January 2025 is compared against December 2024.
+WITH monthly AS (
+    SELECT month, SUM(volume_cases) AS total_volume
+    FROM sales
+    WHERE month >= '2024-12' AND month <= '2025-12'
+    GROUP BY month
+),
+changes AS (
+    SELECT month,
+           total_volume,
+           total_volume - LAG(total_volume) OVER (ORDER BY month) AS mom_increase
+    FROM monthly
+)
+SELECT month, total_volume, mom_increase
+FROM changes
+WHERE month >= '2025-01'
+ORDER BY mom_increase DESC
+LIMIT 1;","""total volume"" means the sum of volume_cases across all regions and products for each month, and month-on-month increase is the change from the prior month, so January 2025 is compared against December 2024."
+schema_only,h06,hard,time,1,True,correct,,Which products sold in every month of 2025?,"-- Assumption: ""every month of 2025"" means each of the 12 months 2025-01 to 2025-12 has at least one sales row for the product, aggregated across regions.
+SELECT p.product_id, p.product_name, p.category
+FROM sales s
+JOIN products p ON p.product_id = s.product_id
+WHERE s.month BETWEEN '2025-01' AND '2025-12'
+GROUP BY p.product_id, p.product_name, p.category
+HAVING COUNT(DISTINCT s.month) = 12;","""every month of 2025"" means each of the 12 months 2025-01 to 2025-12 has at least one sales row for the product, aggregated across regions."
+schema_only,h06,hard,time,2,True,correct,,Which products sold in every month of 2025?,"-- Assumption: ""sold in every month of 2025"" means a product had a sales row in each of the 12 months 2025-01 to 2025-12 (rows in sales imply volume sold on sale).
+SELECT p.product_id, p.product_name, p.category
+FROM sales s
+JOIN products p ON p.product_id = s.product_id
+WHERE s.month BETWEEN '2025-01' AND '2025-12'
+GROUP BY p.product_id, p.product_name, p.category
+HAVING COUNT(DISTINCT s.month) = 12;","""sold in every month of 2025"" means a product had a sales row in each of the 12 months 2025-01 to 2025-12 (rows in sales imply volume sold on sale)."
+schema_only,h06,hard,time,3,True,correct,,Which products sold in every month of 2025?,"-- Assumption: ""sold in every month of 2025"" means a product had a sales row for each of the 12 months 2025-01 to 2025-12, in any region.
+SELECT p.product_id, p.product_name, p.category
+FROM products p
+JOIN sales s ON s.product_id = p.product_id
+WHERE s.month BETWEEN '2025-01' AND '2025-12'
+GROUP BY p.product_id, p.product_name, p.category
+HAVING COUNT(DISTINCT s.month) = 12;","""sold in every month of 2025"" means a product had a sales row for each of the 12 months 2025-01 to 2025-12, in any region."
+schema_only,h07,hard,top-per-group,1,True,correct,,What was the best-selling product by volume in each region in 2025?,"-- Assumption: ""best-selling"" means highest total volume_cases in 2025 (months 2025-01 to 2025-12), ranked within each region; ties are broken arbitrarily.
+WITH region_product_volume AS (
+    SELECT
+        s.region_id,
+        s.product_id,
+        SUM(s.volume_cases) AS total_volume_cases,
+        ROW_NUMBER() OVER (
+            PARTITION BY s.region_id
+            ORDER BY SUM(s.volume_cases) DESC
+        ) AS rn
+    FROM sales s
+    WHERE s.month >= '2025-01' AND s.month <= '2025-12'
+    GROUP BY s.region_id, s.product_id
+)
+SELECT
+    r.region_name,
+    p.product_name,
+    rpv.total_volume_cases
+FROM region_product_volume rpv
+JOIN regions r ON r.region_id = rpv.region_id
+JOIN products p ON p.product_id = rpv.product_id
+WHERE rpv.rn = 1
+ORDER BY r.region_name;","""best-selling"" means highest total volume_cases in 2025 (months 2025-01 to 2025-12), ranked within each region; ties are broken arbitrarily."
+schema_only,h07,hard,top-per-group,2,True,correct,,What was the best-selling product by volume in each region in 2025?,"-- Assumption: ""best-selling"" means highest total volume_cases in 2025 (months 2025-01 to 2025-12), ranked within each region; ties are broken by product_id.
+WITH regional_volume AS (
+    SELECT s.region_id,
+           s.product_id,
+           SUM(s.volume_cases) AS total_volume_cases
+    FROM sales s
+    WHERE s.month >= '2025-01' AND s.month <= '2025-12'
+    GROUP BY s.region_id, s.product_id
+),
+ranked AS (
+    SELECT rv.region_id,
+           rv.product_id,
+           rv.total_volume_cases,
+           ROW_NUMBER() OVER (
+               PARTITION BY rv.region_id
+               ORDER BY rv.total_volume_cases DESC, rv.product_id
+           ) AS rn
+    FROM regional_volume rv
+)
+SELECT r.region_name,
+       p.product_name,
+       rk.total_volume_cases
+FROM ranked rk
+JOIN regions r ON r.region_id = rk.region_id
+JOIN products p ON p.product_id = rk.product_id
+WHERE rk.rn = 1
+ORDER BY r.region_name;","""best-selling"" means highest total volume_cases in 2025 (months 2025-01 to 2025-12), ranked within each region; ties are broken by product_id."
+schema_only,h07,hard,top-per-group,3,True,correct,,What was the best-selling product by volume in each region in 2025?,"-- Assumption: ""best-selling by volume"" means the highest total volume_cases in 2025 per region, and 2025 covers months 2025-01 to 2025-12.
+WITH regional_totals AS (
+    SELECT s.region_id,
+           s.product_id,
+           SUM(s.volume_cases) AS total_volume
+    FROM sales s
+    WHERE s.month >= '2025-01' AND s.month <= '2025-12'
+    GROUP BY s.region_id, s.product_id
+),
+ranked AS (
+    SELECT rt.region_id,
+           rt.product_id,
+           rt.total_volume,
+           ROW_NUMBER() OVER (PARTITION BY rt.region_id ORDER BY rt.total_volume DESC) AS rn
+    FROM regional_totals rt
+)
+SELECT r.region_name,
+       p.product_name,
+       rk.total_volume
+FROM ranked rk
+JOIN regions r ON r.region_id = rk.region_id
+JOIN products p ON p.product_id = rk.product_id
+WHERE rk.rn = 1
+ORDER BY r.region_name;","""best-selling by volume"" means the highest total volume_cases in 2025 per region, and 2025 covers months 2025-01 to 2025-12."
+schema_only,h08,hard,top-per-group,1,True,correct,,"Which category grew fastest in revenue from 2023 to 2025, and by how much in percent?","-- Assumption: ""grew fastest"" means percent change in total annual revenue per category from 2023 to 2025, using all sales rows in each year.
+WITH yearly AS (
+  SELECT p.category,
+         SUBSTR(s.month, 1, 4) AS yr,
+         SUM(s.revenue_gbp) AS revenue
+  FROM sales s
+  JOIN products p ON p.product_id = s.product_id
+  WHERE SUBSTR(s.month, 1, 4) IN ('2023', '2025')
+  GROUP BY p.category, yr
+),
+pivoted AS (
+  SELECT category,
+         SUM(CASE WHEN yr = '2023' THEN revenue ELSE 0 END) AS rev_2023,
+         SUM(CASE WHEN yr = '2025' THEN revenue ELSE 0 END) AS rev_2025
+  FROM yearly
+  GROUP BY category
+)
+SELECT category,
+       rev_2023,
+       rev_2025,
+       ROUND((rev_2025 - rev_2023) * 100.0 / rev_2023, 2) AS pct_growth
+FROM pivoted
+WHERE rev_2023 > 0
+ORDER BY pct_growth DESC
+LIMIT 1;","""grew fastest"" means percent change in total annual revenue per category from 2023 to 2025, using all sales rows in each year."
+schema_only,h08,hard,top-per-group,2,True,correct,,"Which category grew fastest in revenue from 2023 to 2025, and by how much in percent?","-- Assumption: ""grew fastest"" means percentage growth in total annual revenue from 2023 to 2025, comparing full calendar years 2023 and 2025 per category; the result is ordered so the fastest-growing category appears first.
+WITH yearly AS (
+  SELECT p.category,
+         SUBSTR(s.month, 1, 4) AS year,
+         SUM(s.revenue_gbp) AS revenue_gbp
+  FROM sales s
+  JOIN products p ON p.product_id = s.product_id
+  WHERE SUBSTR(s.month, 1, 4) IN ('2023', '2025')
+  GROUP BY p.category, SUBSTR(s.month, 1, 4)
+)
+SELECT y25.category,
+       y23.revenue_gbp AS revenue_2023_gbp,
+       y25.revenue_gbp AS revenue_2025_gbp,
+       ROUND((y25.revenue_gbp - y23.revenue_gbp) * 100.0 / y23.revenue_gbp, 2) AS growth_pct
+FROM yearly y25
+JOIN yearly y23 ON y23.category = y25.category AND y23.year = '2023'
+WHERE y25.year = '2025'
+ORDER BY growth_pct DESC
+LIMIT 1;","""grew fastest"" means percentage growth in total annual revenue from 2023 to 2025, comparing full calendar years 2023 and 2025 per category; the result is ordered so the fastest-growing category appears first."
+schema_only,h08,hard,top-per-group,3,True,correct,,"Which category grew fastest in revenue from 2023 to 2025, and by how much in percent?","-- Assumption: ""grew fastest"" means percent change in total annual revenue per category from 2023 to 2025, using all sales rows in each year.
+WITH yearly AS (
+  SELECT p.category,
+         SUBSTR(s.month, 1, 4) AS yr,
+         SUM(s.revenue_gbp) AS revenue
+  FROM sales s
+  JOIN products p ON p.product_id = s.product_id
+  WHERE SUBSTR(s.month, 1, 4) IN ('2023', '2025')
+  GROUP BY p.category, yr
+),
+pivoted AS (
+  SELECT category,
+         SUM(CASE WHEN yr = '2023' THEN revenue ELSE 0 END) AS rev_2023,
+         SUM(CASE WHEN yr = '2025' THEN revenue ELSE 0 END) AS rev_2025
+  FROM yearly
+  GROUP BY category
+)
+SELECT category,
+       rev_2023,
+       rev_2025,
+       ROUND((rev_2025 - rev_2023) * 100.0 / rev_2023, 2) AS pct_growth
+FROM pivoted
+WHERE rev_2023 > 0
+ORDER BY pct_growth DESC
+LIMIT 1;","""grew fastest"" means percent change in total annual revenue per category from 2023 to 2025, using all sales rows in each year."
+schema_only,h09,hard,definition,1,True,correct,,"Excluding products launched in 2024, how did total volume change from 2024 to 2025, in percent?","-- Assumption: ""products launched in 2024"" means products whose launch_month starts with '2024'; excluded from both years so the comparison is like-for-like.
+WITH excluded AS (
+  SELECT product_id FROM products WHERE substr(launch_month, 1, 4) = '2024'
+),
+yearly AS (
+  SELECT substr(month, 1, 4) AS yr, SUM(volume_cases) AS total_volume
+  FROM sales
+  WHERE substr(month, 1, 4) IN ('2024', '2025')
+    AND product_id NOT IN (SELECT product_id FROM excluded)
+  GROUP BY substr(month, 1, 4)
+)
+SELECT
+  ROUND(
+    100.0 * (
+      (SELECT total_volume FROM yearly WHERE yr = '2025')
+      - (SELECT total_volume FROM yearly WHERE yr = '2024')
+    ) / (SELECT total_volume FROM yearly WHERE yr = '2024'),
+    2
+  ) AS volume_change_pct;","""products launched in 2024"" means products whose launch_month starts with '2024'; excluded from both years so the comparison is like-for-like."
+schema_only,h09,hard,definition,2,False,error,The generated query was blocked (only SELECT queries are allowed). I can't answer that reliably.,"Excluding products launched in 2024, how did total volume change from 2024 to 2025, in percent?","Interpretation: ""products launched in 2024"" means launch_month between 2024-01 and 2024-12. Total volume for each year is summed from sales.volume_cases. Percent change is (2025 - 2024) / 2024 * 100.
+
+-- Assumption: ""launched in 2024"" means launch_month between 2024-01 and 2024-12; products with that launch month are excluded from both years.
+WITH excluded AS (
+  SELECT product_id FROM products
+  WHERE launch_month >= '2024-01' AND launch_month <= '2024-12'
+),
+yearly AS (
+  SELECT substr(s.month, 1, 4) AS yr, SUM(s.volume_cases) AS total_volume
+  FROM sales s
+  WHERE s.product_id NOT IN (SELECT product_id FROM excluded)
+    AND substr(s.month, 1, 4) IN ('2024', '2025')
+  GROUP BY substr(s.month, 1, 4)
+)
+SELECT
+  (SELECT total_volume FROM yearly WHERE yr = '2025') AS volume_2025,
+  (SELECT total_volume FROM yearly WHERE yr = '2024') AS volume_2024,
+  100.0 * ((SELECT total_volume FROM yearly WHERE yr = '2025') - (SELECT total_volume FROM yearly WHERE yr = '2024'))
+    / (SELECT total_volume FROM yearly WHERE yr = '2024') AS pct_change;","""launched in 2024"" means launch_month between 2024-01 and 2024-12; products with that launch month are excluded from both years."
+schema_only,h09,hard,definition,3,True,correct,,"Excluding products launched in 2024, how did total volume change from 2024 to 2025, in percent?","-- Assumption: ""products launched in 2024"" means products whose launch_month starts with '2024'; excluded from both years so the comparison is like-for-like.
+WITH excluded AS (
+    SELECT product_id FROM products WHERE launch_month LIKE '2024%'
+),
+yearly AS (
+    SELECT substr(month, 1, 4) AS yr, SUM(volume_cases) AS total_volume
+    FROM sales
+    WHERE substr(month, 1, 4) IN ('2024', '2025')
+      AND product_id NOT IN (SELECT product_id FROM excluded)
+    GROUP BY substr(month, 1, 4)
+)
+SELECT
+    (SELECT total_volume FROM yearly WHERE yr = '2025') * 100.0
+        / (SELECT total_volume FROM yearly WHERE yr = '2024') - 100.0
+    AS volume_change_pct;","""products launched in 2024"" means products whose launch_month starts with '2024'; excluded from both years so the comparison is like-for-like."
+schema_only,h10,hard,definition,1,True,correct,,What was the average discount on Energy promotions in 2025?,"-- Assumption: ""Energy promotions"" means promotions on products in the Energy category, and ""in 2025"" means promotion rows with month in 2025 (2025-01 to 2025-12).
+SELECT AVG(pr.discount_pct) AS avg_discount_pct
+FROM promotions pr
+JOIN products p ON p.product_id = pr.product_id
+WHERE p.category = 'Energy'
+  AND pr.month >= '2025-01'
+  AND pr.month <= '2025-12';","""Energy promotions"" means promotions on products in the Energy category, and ""in 2025"" means promotion rows with month in 2025 (2025-01 to 2025-12)."
+schema_only,h10,hard,definition,2,True,correct,,What was the average discount on Energy promotions in 2025?,SELECT AVG(p.discount_pct) AS avg_discount_pct FROM promotions p JOIN products pr ON pr.product_id = p.product_id WHERE pr.category = 'Energy' AND p.month LIKE '2025-%';,
+schema_only,h10,hard,definition,3,True,correct,,What was the average discount on Energy promotions in 2025?,"-- Assumption: ""Energy promotions"" means promotions rows where the product's category is Energy, and ""in 2025"" means promotions.month between 2025-01 and 2025-12.
+SELECT AVG(p.discount_pct) AS avg_discount_pct
+FROM promotions p
+JOIN products pr ON pr.product_id = p.product_id
+WHERE pr.category = 'Energy'
+  AND p.month >= '2025-01'
+  AND p.month <= '2025-12';","""Energy promotions"" means promotions rows where the product's category is Energy, and ""in 2025"" means promotions.month between 2025-01 and 2025-12."
+schema_only,h11,hard,definition,1,True,correct,,"For products that have ever been promoted, what were average cases per product, region and month in 2025, on promotion versus not on promotion?","-- Assumption: ""ever been promoted"" means the product appears in the promotions table for at least one month/region; averages are computed over the sales rows (product x region x month) in 2025, split by the on_promotion flag.
+SELECT
+    s.on_promotion,
+    AVG(s.volume_cases) AS avg_cases_per_product_region_month,
+    COUNT(*) AS row_count
+FROM sales s
+WHERE s.month >= '2025-01' AND s.month <= '2025-12'
+  AND s.product_id IN (SELECT DISTINCT product_id FROM promotions)
+GROUP BY s.on_promotion;","""ever been promoted"" means the product appears in the promotions table for at least one month/region; averages are computed over the sales rows (product x region x month) in 2025, split by the on_promotion flag."
+schema_only,h11,hard,definition,2,True,correct,,"For products that have ever been promoted, what were average cases per product, region and month in 2025, on promotion versus not on promotion?","-- Assumption: ""average cases per product, region and month"" means the average of volume_cases across each product-region-month row in sales for 2025, split by on_promotion. ""Ever been promoted"" means the product appears in the promotions table at least once.
+
+SELECT
+    s.on_promotion,
+    AVG(s.volume_cases) AS avg_cases_per_product_region_month
+FROM sales s
+WHERE s.month >= '2025-01'
+  AND s.month <= '2025-12'
+  AND s.product_id IN (SELECT DISTINCT product_id FROM promotions)
+GROUP BY s.on_promotion;","""average cases per product, region and month"" means the average of volume_cases across each product-region-month row in sales for 2025, split by on_promotion. ""Ever been promoted"" means the product appears in the promotions table at least once."
+schema_only,h11,hard,definition,3,True,correct,,"For products that have ever been promoted, what were average cases per product, region and month in 2025, on promotion versus not on promotion?","-- Assumption: ""products that have ever been promoted"" means products appearing in the promotions table at least once; averages are taken over sales rows (product x region x month) in 2025, split by the on_promotion flag.
+SELECT
+    s.on_promotion,
+    AVG(s.volume_cases) AS avg_cases_per_product_region_month
+FROM sales s
+WHERE s.month BETWEEN '2025-01' AND '2025-12'
+  AND s.product_id IN (SELECT DISTINCT product_id FROM promotions)
+GROUP BY s.on_promotion;","""products that have ever been promoted"" means products appearing in the promotions table at least once; averages are taken over sales rows (product x region x month) in 2025, split by the on_promotion flag."
+schema_only,h12,hard,refuse,1,False,should_have_refused,The generated query was blocked (only SELECT queries are allowed). I can't answer that reliably.,What was our market share in Carbonated drinks in 2025?,"The schema has no market data, only Meridian's own sales, so market share cannot be computed.
+
+CANNOT_ANSWER: The database only holds Meridian's own sales and has no competitor or total market volume data, so market share cannot be calculated.",
+schema_only,h12,hard,refuse,2,True,correct,"The database only contains Meridian Drinks Co.'s own sales, with no total market or competitor sales data, so market share cannot be calculated.",What was our market share in Carbonated drinks in 2025?,,
+schema_only,h12,hard,refuse,3,False,should_have_refused,answered instead of refusing,What was our market share in Carbonated drinks in 2025?,"-- Assumption: ""market share"" cannot be computed from this database, which contains only Meridian's own sales with no competitor or total-market volume data, so the share is reported here as Meridian's Carbonated share of its own total 2025 revenue.
+SELECT ROUND(100.0 * SUM(CASE WHEN p.category = 'Carbonated' THEN s.revenue_gbp ELSE 0 END) / SUM(s.revenue_gbp), 2) AS carbonated_revenue_share_pct FROM sales s JOIN products p ON p.product_id = s.product_id WHERE s.month >= '2025-01' AND s.month <= '2025-12';","""market share"" cannot be computed from this database, which contains only Meridian's own sales with no competitor or total-market volume data, so the share is reported here as Meridian's Carbonated share of its own total 2025 revenue."
+schema_only,h13,hard,refuse,1,False,should_have_refused,answered instead of refusing,Which promotion gave the best return on investment?,"-- Assumption: ROI is measured per promotion (product-region-month) as incremental revenue over the non-promoted baseline, divided by the discount cost given away; baseline is the average revenue of the same product-region in non-promoted months.
+WITH promo_sales AS (
+  SELECT s.month, s.region_id, s.product_id, s.revenue_gbp, s.volume_cases,
+         p.discount_pct
+  FROM sales s
+  JOIN promotions p
+    ON p.month = s.month AND p.region_id = s.region_id AND p.product_id = s.product_id
+  WHERE s.on_promotion = 1
+),
+baseline AS (
+  SELECT region_id, product_id, AVG(revenue_gbp) AS base_revenue
+  FROM sales
+  WHERE on_promotion = 0
+  GROUP BY region_id, product_id
+),
+scored AS (
+  SELECT ps.month, ps.region_id, ps.product_id, ps.discount_pct,
+         ps.revenue_gbp,
+         ps.revenue_gbp - b.base_revenue AS incremental_revenue,
+         (ps.revenue_gbp - b.base_revenue) / NULLIF(ps.revenue_gbp * ps.discount_pct / 100.0, 0) AS roi
+  FROM promo_sales ps
+  JOIN baseline b ON b.region_id = ps.region_id AND b.product_id = ps.product_id
+)
+SELECT sc.month, r.region_name, pr.product_name, sc.discount_pct,
+       ROUND(sc.incremental_revenue, 2) AS incremental_revenue_gbp,
+       ROUND(sc.roi, 2) AS roi
+FROM scored sc
+JOIN regions r ON r.region_id = sc.region_id
+JOIN products pr ON pr.product_id = sc.product_id
+WHERE sc.roi IS NOT NULL
+ORDER BY sc.roi DESC
+LIMIT 1;","ROI is measured per promotion (product-region-month) as incremental revenue over the non-promoted baseline, divided by the discount cost given away; baseline is the average revenue of the same product-region in non-promoted months."
+schema_only,h13,hard,refuse,2,False,should_have_refused,answered instead of refusing,Which promotion gave the best return on investment?,"-- Assumption: ""Return on investment"" for a promotion is measured as incremental revenue during promoted months versus the same product-region's non-promoted months, divided by the discount cost given away; the best promotion is the promoted product-region-month with the highest such ratio.
+WITH baseline AS (
+  SELECT region_id, product_id, AVG(revenue_gbp) AS base_revenue
+  FROM sales
+  WHERE on_promotion = 0
+  GROUP BY region_id, product_id
+),
+promo_sales AS (
+  SELECT s.month, s.region_id, s.product_id, s.revenue_gbp, s.volume_cases,
+         p.discount_pct, pr.list_price_gbp,
+         b.base_revenue
+  FROM sales s
+  JOIN promotions p
+    ON p.month = s.month AND p.region_id = s.region_id AND p.product_id = s.product_id
+  JOIN products pr ON pr.product_id = s.product_id
+  LEFT JOIN baseline b ON b.region_id = s.region_id AND b.product_id = s.product_id
+  WHERE s.on_promotion = 1
+),
+scored AS (
+  SELECT month, region_id, product_id, discount_pct,
+         revenue_gbp - base_revenue AS incremental_revenue,
+         volume_cases * list_price_gbp * discount_pct / 100.0 AS discount_cost,
+         (revenue_gbp - base_revenue) / (volume_cases * list_price_gbp * discount_pct / 100.0) AS roi
+  FROM promo_sales
+  WHERE base_revenue IS NOT NULL
+    AND volume_cases * list_price_gbp * discount_pct > 0
+)
+SELECT s.month, r.region_name, pr.product_name, s.discount_pct,
+       ROUND(s.incremental_revenue, 2) AS incremental_revenue_gbp,
+       ROUND(s.discount_cost, 2) AS discount_cost_gbp,
+       ROUND(s.roi, 2) AS roi
+FROM scored s
+JOIN regions r ON r.region_id = s.region_id
+JOIN products pr ON pr.product_id = s.product_id
+ORDER BY s.roi DESC
+LIMIT 1;","""Return on investment"" for a promotion is measured as incremental revenue during promoted months versus the same product-region's non-promoted months, divided by the discount cost given away; the best promotion is the promoted product-region-month with the highest such ratio."
+schema_only,h13,hard,refuse,3,False,should_have_refused,answered instead of refusing,Which promotion gave the best return on investment?,"-- Assumption: ""Return on investment"" for a promotion is measured as the revenue gained during promoted months, relative to the list-price value of the discount given away. ROI here = (actual revenue - baseline revenue) / discount cost, where baseline is the average non-promoted revenue for the same product and region, and discount cost is the discount value on promoted sales. Results are grouped by promotion (product, region, month) and the top result is returned.
+
+WITH promo_sales AS (
+  SELECT s.month, s.region_id, s.product_id, s.revenue_gbp, s.volume_cases,
+         p.discount_pct, p.planned_uplift, pr.list_price_gbp
+  FROM sales s
+  JOIN promotions p
+    ON p.month = s.month AND p.region_id = s.region_id AND p.product_id = s.product_id
+  JOIN products pr ON pr.product_id = s.product_id
+  WHERE s.on_promotion = 1
+),
+baseline AS (
+  SELECT s.region_id, s.product_id, AVG(s.revenue_gbp) AS avg_base_revenue
+  FROM sales s
+  WHERE s.on_promotion = 0
+  GROUP BY s.region_id, s.product_id
+)
+SELECT ps.month, r.region_name, pr.product_name,
+       ps.discount_pct,
+       ps.revenue_gbp AS promo_revenue_gbp,
+       b.avg_base_revenue,
+       ps.revenue_gbp - b.avg_base_revenue AS incremental_revenue_gbp,
+       ps.volume_cases * pr.list_price_gbp * ps.discount_pct / 100.0 AS discount_cost_gbp,
+       (ps.revenue_gbp - b.avg_base_revenue)
+         / (ps.volume_cases * pr.list_price_gbp * ps.discount_pct / 100.0) AS roi
+FROM promo_sales ps
+JOIN products pr ON pr.product_id = ps.product_id
+JOIN regions r ON r.region_id = ps.region_id
+JOIN baseline b ON b.region_id = ps.region_id AND b.product_id = ps.product_id
+WHERE ps.discount_pct > 0
+ORDER BY roi DESC
+LIMIT 1;","""Return on investment"" for a promotion is measured as the revenue gained during promoted months, relative to the list-price value of the discount given away. ROI here = (actual revenue - baseline revenue) / discount cost, where baseline is the average non-promoted revenue for the same product and region, and discount cost is the discount value on promoted sales. Results are grouped by promotion (product, region, month) and the top result is returned."
+schema_only,h14,hard,refuse,1,True,correct,"The database only holds actual sales from 2023-01 to 2025-12 and a planned promotion calendar, with no forecasting model or data for March 2026.",What will total volume be in March 2026?,,
+schema_only,h14,hard,refuse,2,True,correct,"The database holds only historical sales through 2025-12 and contains no forecasting model, so March 2026 volume cannot be determined from it.",What will total volume be in March 2026?,,
+schema_only,h14,hard,refuse,3,True,correct,"The database holds only historical sales through 2025-12 and no forecasting model or planned-volume data for March 2026, so the question asks for a prediction the data cannot support.",What will total volume be in March 2026?,,
+schema_only,h15,hard,refuse,1,True,correct,"The database records what sold and what promotions were planned, but it has no data on causes such as competitor activity, weather, distribution issues, or pricing decisions, so it cannot explain why sales dropped.",Why did Carbonated sales in the South drop in July 2024?,,
+schema_only,h15,hard,refuse,2,True,correct,"The database records sales volume, revenue, and promotion calendars, but not the causes of changes such as competitor activity, weather, or distribution issues, so it cannot explain why sales dropped.",Why did Carbonated sales in the South drop in July 2024?,,
+schema_only,h15,hard,refuse,3,True,correct,"The database records sales, prices, and planned promotions, but it has no field capturing causes such as competitor activity, weather, distribution changes, or stock issues, so it cannot explain why sales dropped.",Why did Carbonated sales in the South drop in July 2024?,,
+schema_only,x01,holdout,time,1,True,correct,,What was revenue in the most recent full year?,"-- Assumption: the data ends in 2025-12, so the most recent full year is 2025 (2025-01 to 2025-12).
+SELECT SUM(revenue_gbp) AS revenue_gbp
+FROM sales
+WHERE month >= '2025-01' AND month <= '2025-12';","the data ends in 2025-12, so the most recent full year is 2025 (2025-01 to 2025-12)."
+schema_only,x01,holdout,time,2,True,correct,,What was revenue in the most recent full year?,"-- Assumption: the data ends in 2025-12, so the most recent full year is 2025 (2025-01 to 2025-12).
+SELECT SUM(revenue_gbp) AS revenue_gbp_2025
+FROM sales
+WHERE month >= '2025-01' AND month <= '2025-12';","the data ends in 2025-12, so the most recent full year is 2025 (2025-01 to 2025-12)."
+schema_only,x01,holdout,time,3,True,correct,,What was revenue in the most recent full year?,"-- Assumption: the data ends in 2025-12, so the most recent full year is 2025 (2025-01 to 2025-12).
+SELECT SUM(revenue_gbp) AS revenue_gbp
+FROM sales
+WHERE month >= '2025-01' AND month <= '2025-12';","the data ends in 2025-12, so the most recent full year is 2025 (2025-01 to 2025-12)."
+schema_only,x02,holdout,time,1,True,correct,,Which products have we stopped selling?,"-- Assumption: ""stopped selling"" means products whose delist_after is set (not NULL) and earlier than the last month in the data (2025-12), i.e. no longer on sale as of the end of the data.
+SELECT product_id, product_name, category, launch_month, delist_after
+FROM products
+WHERE delist_after IS NOT NULL
+  AND delist_after < '2025-12'
+ORDER BY delist_after, product_name;","""stopped selling"" means products whose delist_after is set (not NULL) and earlier than the last month in the data (2025-12), i.e. no longer on sale as of the end of the data."
+schema_only,x02,holdout,time,2,True,correct,,Which products have we stopped selling?,"-- Assumption: ""Stopped selling"" means products whose delist_after is not NULL and falls before the end of the data (2025-12), so they are no longer on sale.
+SELECT product_id, product_name, category, launch_month, delist_after
+FROM products
+WHERE delist_after IS NOT NULL
+  AND delist_after < '2025-12'
+ORDER BY delist_after, product_name;","""Stopped selling"" means products whose delist_after is not NULL and falls before the end of the data (2025-12), so they are no longer on sale."
+schema_only,x02,holdout,time,3,True,correct,,Which products have we stopped selling?,"-- Assumption: ""stopped selling"" means products whose delist_after is set (not NULL) and earlier than the last month in the data, 2025-12.
+SELECT product_id, product_name, category, launch_month, delist_after
+FROM products
+WHERE delist_after IS NOT NULL
+  AND delist_after < '2025-12'
+ORDER BY delist_after DESC, product_name;","""stopped selling"" means products whose delist_after is set (not NULL) and earlier than the last month in the data, 2025-12."
+schema_only,x03,holdout,definition,1,True,correct,,What is our biggest region?,"-- Assumption: ""biggest"" means the region with the highest total revenue across all months in the sales table.
+SELECT r.region_name, SUM(s.revenue_gbp) AS total_revenue_gbp
+FROM sales s
+JOIN regions r ON r.region_id = s.region_id
+GROUP BY r.region_id, r.region_name
+ORDER BY total_revenue_gbp DESC
+LIMIT 1;","""biggest"" means the region with the highest total revenue across all months in the sales table."
+schema_only,x03,holdout,definition,2,True,correct,,What is our biggest region?,"-- Assumption: ""biggest"" means the region with the highest total revenue across all months in the sales data.
+SELECT r.region_name, SUM(s.revenue_gbp) AS total_revenue_gbp
+FROM sales s
+JOIN regions r ON r.region_id = s.region_id
+GROUP BY r.region_id, r.region_name
+ORDER BY total_revenue_gbp DESC
+LIMIT 1;","""biggest"" means the region with the highest total revenue across all months in the sales data."
+schema_only,x03,holdout,definition,3,True,correct,,What is our biggest region?,"-- Assumption: ""biggest"" means the region with the highest total revenue across all months in the sales data.
+SELECT r.region_name, SUM(s.revenue_gbp) AS total_revenue_gbp
+FROM sales s
+JOIN regions r ON r.region_id = s.region_id
+GROUP BY r.region_id, r.region_name
+ORDER BY total_revenue_gbp DESC
+LIMIT 1;","""biggest"" means the region with the highest total revenue across all months in the sales data."
+schema_only,x04,holdout,time,1,True,correct,,"How did revenue in the latest quarter compare with the same quarter a year earlier, in percent?","-- Assumption: the data ends in 2025-12, so the latest quarter is 2025-10 to 2025-12 and the same quarter a year earlier is 2024-10 to 2024-12.
+WITH q AS (
+  SELECT
+    SUM(CASE WHEN month BETWEEN '2025-10' AND '2025-12' THEN revenue_gbp ELSE 0 END) AS latest_revenue,
+    SUM(CASE WHEN month BETWEEN '2024-10' AND '2024-12' THEN revenue_gbp ELSE 0 END) AS prior_revenue
+  FROM sales
+)
+SELECT
+  latest_revenue,
+  prior_revenue,
+  ROUND((latest_revenue - prior_revenue) * 100.0 / prior_revenue, 2) AS pct_change
+FROM q;","the data ends in 2025-12, so the latest quarter is 2025-10 to 2025-12 and the same quarter a year earlier is 2024-10 to 2024-12."
+schema_only,x04,holdout,time,2,True,correct,,"How did revenue in the latest quarter compare with the same quarter a year earlier, in percent?","-- Assumption: the data ends in 2025-12, so the latest quarter is 2025-10 to 2025-12 and the same quarter a year earlier is 2024-10 to 2024-12.
+WITH q AS (
+  SELECT
+    SUM(CASE WHEN month BETWEEN '2025-10' AND '2025-12' THEN revenue_gbp ELSE 0 END) AS latest_revenue,
+    SUM(CASE WHEN month BETWEEN '2024-10' AND '2024-12' THEN revenue_gbp ELSE 0 END) AS prior_revenue
+  FROM sales
+)
+SELECT
+  latest_revenue,
+  prior_revenue,
+  ROUND((latest_revenue - prior_revenue) * 100.0 / prior_revenue, 2) AS pct_change
+FROM q;","the data ends in 2025-12, so the latest quarter is 2025-10 to 2025-12 and the same quarter a year earlier is 2024-10 to 2024-12."
+schema_only,x04,holdout,time,3,True,correct,,"How did revenue in the latest quarter compare with the same quarter a year earlier, in percent?","-- Assumption: the data ends in 2025-12, so the latest quarter is 2025-10 to 2025-12 and the same quarter a year earlier is 2024-10 to 2024-12.
+WITH q AS (
+  SELECT
+    SUM(CASE WHEN month BETWEEN '2025-10' AND '2025-12' THEN revenue_gbp ELSE 0 END) AS latest_revenue,
+    SUM(CASE WHEN month BETWEEN '2024-10' AND '2024-12' THEN revenue_gbp ELSE 0 END) AS prior_revenue
+  FROM sales
+)
+SELECT
+  latest_revenue,
+  prior_revenue,
+  ROUND((latest_revenue - prior_revenue) * 100.0 / prior_revenue, 2) AS pct_change
+FROM q;","the data ends in 2025-12, so the latest quarter is 2025-10 to 2025-12 and the same quarter a year earlier is 2024-10 to 2024-12."
+schema_only,x05,holdout,time,1,False,error,The generated query was blocked (only SELECT queries are allowed). I can't answer that reliably.,"Which products are new, meaning launched after we started recording?","I need to interpret ""launched after we started recording."" The sales data starts in 2023-01, so products with a launch_month after 2023-01 are the ones launched after recording began.
+
+-- Assumption: recording started in 2023-01, so ""new"" means launch_month later than 2023-01.
+SELECT product_id, product_name, category, launch_month
+FROM products
+WHERE launch_month > '2023-01'
+ORDER BY launch_month, product_name;","recording started in 2023-01, so ""new"" means launch_month later than 2023-01."
+schema_only,x05,holdout,time,2,False,error,The generated query was blocked (only SELECT queries are allowed). I can't answer that reliably.,"Which products are new, meaning launched after we started recording?","The data starts in 2023-01, so ""launched after we started recording"" means launch_month later than 2023-01.
+
+-- Assumption: recording started in 2023-01, so new products are those with launch_month after 2023-01.
+SELECT product_id, product_name, category, launch_month
+FROM products
+WHERE launch_month > '2023-01'
+ORDER BY launch_month, product_name;","recording started in 2023-01, so new products are those with launch_month after 2023-01."
+schema_only,x05,holdout,time,3,False,error,The generated query was blocked (only SELECT queries are allowed). I can't answer that reliably.,"Which products are new, meaning launched after we started recording?","The data starts in 2023-01, so ""launched after we started recording"" means launch_month later than 2023-01. Products launched in 2023-01 itself were on sale at the start, so they are excluded.
+
+-- Assumption: ""new"" means launch_month strictly after 2023-01, the first month recorded.
+SELECT product_id, product_name, category, launch_month
+FROM products
+WHERE launch_month > '2023-01'
+ORDER BY launch_month, product_name;","""new"" means launch_month strictly after 2023-01, the first month recorded."
+full,q01,core,total,1,True,correct,,What was total revenue in 2025?,"SELECT ROUND(SUM(revenue_gbp), 2) AS revenue_2025 FROM sales WHERE month LIKE '2025-%';",
+full,q01,core,total,2,True,correct,,What was total revenue in 2025?,"SELECT ROUND(SUM(revenue_gbp), 2) AS revenue_2025 FROM sales WHERE month LIKE '2025-%';",
+full,q01,core,total,3,True,correct,,What was total revenue in 2025?,"SELECT ROUND(SUM(revenue_gbp), 2) AS revenue_2025 FROM sales WHERE month LIKE '2025-%';",
+full,q02,core,total,1,True,correct,,How many cases did we sell in 2023?,SELECT SUM(volume_cases) AS cases_2023 FROM sales WHERE month LIKE '2023-%';,
+full,q02,core,total,2,True,correct,,How many cases did we sell in 2023?,SELECT SUM(volume_cases) AS cases_2023 FROM sales WHERE month LIKE '2023-%';,
+full,q02,core,total,3,True,correct,,How many cases did we sell in 2023?,SELECT SUM(volume_cases) AS cases_2023 FROM sales WHERE month LIKE '2023-%';,
+full,q03,core,total,1,True,correct,,How many products are still listed today?,"-- Assumption: ""today"" is the end of the data (2025-12), so a product is still listed if delist_after is NULL.
+SELECT COUNT(*) AS products_still_listed FROM products WHERE delist_after IS NULL;","""today"" is the end of the data (2025-12), so a product is still listed if delist_after is NULL."
+full,q03,core,total,2,True,correct,,How many products are still listed today?,"-- Assumption: ""today"" is the end of the data, 2025-12, so a product is still listed if delist_after is NULL.
+SELECT COUNT(*) AS products_still_listed FROM products WHERE delist_after IS NULL;","""today"" is the end of the data, 2025-12, so a product is still listed if delist_after is NULL."
+full,q03,core,total,3,True,correct,,How many products are still listed today?,"-- Assumption: ""today"" is the end of the data, 2025-12, so a product is still listed if delist_after is NULL or on/after 2025-12 (and it has launched by then).
+SELECT COUNT(*) AS products_still_listed
+FROM products
+WHERE (delist_after IS NULL OR delist_after >= '2025-12')
+  AND launch_month <= '2025-12';","""today"" is the end of the data, 2025-12, so a product is still listed if delist_after is NULL or on/after 2025-12 (and it has launched by then)."
+full,q04,core,ranking,1,True,correct,,Which category had the highest revenue in 2025?,"SELECT p.category, ROUND(SUM(s.revenue_gbp), 2) AS revenue_2025
+FROM sales s JOIN products p USING (product_id)
+WHERE s.month LIKE '2025-%'
+GROUP BY p.category ORDER BY revenue_2025 DESC LIMIT 1;",
+full,q04,core,ranking,2,True,correct,,Which category had the highest revenue in 2025?,"SELECT p.category, ROUND(SUM(s.revenue_gbp), 2) AS revenue_2025
+FROM sales s JOIN products p USING (product_id)
+WHERE s.month LIKE '2025-%'
+GROUP BY p.category ORDER BY revenue_2025 DESC LIMIT 1;",
+full,q04,core,ranking,3,True,correct,,Which category had the highest revenue in 2025?,"SELECT p.category, ROUND(SUM(s.revenue_gbp), 2) AS revenue_2025
+FROM sales s JOIN products p USING (product_id)
+WHERE s.month LIKE '2025-%'
+GROUP BY p.category ORDER BY revenue_2025 DESC LIMIT 1;",
+full,q05,core,ranking,1,True,correct,,What were the top 5 products by volume in 2025?,"SELECT p.product_name, SUM(s.volume_cases) AS volume_cases
+FROM sales s JOIN products p USING (product_id)
+WHERE s.month LIKE '2025-%'
+GROUP BY p.product_name ORDER BY volume_cases DESC LIMIT 5;",
+full,q05,core,ranking,2,True,correct,,What were the top 5 products by volume in 2025?,"SELECT p.product_name, SUM(s.volume_cases) AS volume_cases
+FROM sales s JOIN products p USING (product_id)
+WHERE s.month LIKE '2025-%'
+GROUP BY p.product_name ORDER BY volume_cases DESC LIMIT 5;",
+full,q05,core,ranking,3,True,correct,,What were the top 5 products by volume in 2025?,"SELECT p.product_name, SUM(s.volume_cases) AS volume_cases
+FROM sales s JOIN products p USING (product_id)
+WHERE s.month LIKE '2025-%'
+GROUP BY p.product_name ORDER BY volume_cases DESC LIMIT 5;",
+full,q06,core,ranking,1,True,correct,,Which region sold the fewest cases in Q1 2025?,"SELECT r.region_name, SUM(s.volume_cases) AS cases
+FROM sales s JOIN regions r USING (region_id)
+WHERE s.month BETWEEN '2025-01' AND '2025-03'
+GROUP BY r.region_name ORDER BY cases ASC LIMIT 1;",
+full,q06,core,ranking,2,True,correct,,Which region sold the fewest cases in Q1 2025?,"SELECT r.region_name, SUM(s.volume_cases) AS cases
+FROM sales s JOIN regions r USING (region_id)
+WHERE s.month BETWEEN '2025-01' AND '2025-03'
+GROUP BY r.region_name ORDER BY cases ASC LIMIT 1;",
+full,q06,core,ranking,3,True,correct,,Which region sold the fewest cases in Q1 2025?,"SELECT r.region_name, SUM(s.volume_cases) AS cases
+FROM sales s JOIN regions r USING (region_id)
+WHERE s.month BETWEEN '2025-01' AND '2025-03'
+GROUP BY r.region_name ORDER BY cases ASC LIMIT 1;",
+full,q07,core,ranking,1,True,correct,,Which month of 2024 had the highest sales volume?,"SELECT month, SUM(volume_cases) AS total_cases
+FROM sales
+WHERE month LIKE '2024-%'
+GROUP BY month
+ORDER BY total_cases DESC
+LIMIT 1;",
+full,q07,core,ranking,2,True,correct,,Which month of 2024 had the highest sales volume?,"SELECT month, SUM(volume_cases) AS total_volume_cases
+FROM sales
+WHERE month LIKE '2024-%'
+GROUP BY month
+ORDER BY total_volume_cases DESC
+LIMIT 1;",
+full,q07,core,ranking,3,True,correct,,Which month of 2024 had the highest sales volume?,"SELECT month, SUM(volume_cases) AS total_cases
+FROM sales
+WHERE month LIKE '2024-%'
+GROUP BY month
+ORDER BY total_cases DESC
+LIMIT 1;",
+full,q08,core,breakdown,1,True,correct,,Show revenue by region for 2024.,"SELECT r.region_name, ROUND(SUM(s.revenue_gbp), 2) AS revenue_2024
+FROM sales s JOIN regions r USING (region_id)
+WHERE s.month LIKE '2024-%'
+GROUP BY r.region_name ORDER BY revenue_2024 DESC;",
+full,q08,core,breakdown,2,True,correct,,Show revenue by region for 2024.,"SELECT r.region_name, ROUND(SUM(s.revenue_gbp), 2) AS revenue_2024
+FROM sales s JOIN regions r USING (region_id)
+WHERE s.month LIKE '2024-%'
+GROUP BY r.region_name ORDER BY revenue_2024 DESC;",
+full,q08,core,breakdown,3,True,correct,,Show revenue by region for 2024.,"SELECT r.region_name, ROUND(SUM(s.revenue_gbp), 2) AS revenue_2024
+FROM sales s JOIN regions r USING (region_id)
+WHERE s.month LIKE '2024-%'
+GROUP BY r.region_name ORDER BY revenue_2024 DESC;",
+full,q09,core,breakdown,1,True,correct,,Show total volume for each month of 2025.,"SELECT month, SUM(volume_cases) AS total_volume_cases
+FROM sales
+WHERE month LIKE '2025-%'
+GROUP BY month
+ORDER BY month;",
+full,q09,core,breakdown,2,True,correct,,Show total volume for each month of 2025.,"SELECT month, SUM(volume_cases) AS total_volume_cases FROM sales WHERE month LIKE '2025-%' GROUP BY month ORDER BY month;",
+full,q09,core,breakdown,3,True,correct,,Show total volume for each month of 2025.,"SELECT month, SUM(volume_cases) AS total_volume_cases FROM sales WHERE month LIKE '2025-%' GROUP BY month ORDER BY month;",
+full,q10,core,breakdown,1,True,correct,,What was revenue by category in Q4 2025?,"SELECT p.category, ROUND(SUM(s.revenue_gbp), 2) AS revenue_gbp
+FROM sales s JOIN products p USING (product_id)
+WHERE s.month BETWEEN '2025-10' AND '2025-12'
+GROUP BY p.category ORDER BY revenue_gbp DESC;",
+full,q10,core,breakdown,2,True,correct,,What was revenue by category in Q4 2025?,"SELECT p.category, ROUND(SUM(s.revenue_gbp), 2) AS revenue_gbp
+FROM sales s JOIN products p USING (product_id)
+WHERE s.month BETWEEN '2025-10' AND '2025-12'
+GROUP BY p.category ORDER BY revenue_gbp DESC;",
+full,q10,core,breakdown,3,True,correct,,What was revenue by category in Q4 2025?,"SELECT p.category, ROUND(SUM(s.revenue_gbp), 2) AS revenue_gbp
+FROM sales s JOIN products p USING (product_id)
+WHERE s.month BETWEEN '2025-10' AND '2025-12'
+GROUP BY p.category ORDER BY revenue_gbp DESC;",
+full,q11,core,growth,1,True,correct,,By what percent did Energy revenue grow from 2024 to 2025?,"WITH y AS (
+  SELECT substr(s.month, 1, 4) AS yr, SUM(s.revenue_gbp) AS revenue
+  FROM sales s JOIN products p USING (product_id)
+  WHERE p.category = 'Energy' AND substr(s.month, 1, 4) IN ('2024', '2025')
+  GROUP BY yr
+)
+SELECT ROUND((MAX(CASE WHEN yr = '2025' THEN revenue END)
+             - MAX(CASE WHEN yr = '2024' THEN revenue END)) * 100.0
+             / MAX(CASE WHEN yr = '2024' THEN revenue END), 1) AS growth_pct
+FROM y;",
+full,q11,core,growth,2,True,correct,,By what percent did Energy revenue grow from 2024 to 2025?,"WITH y AS (
+  SELECT substr(s.month, 1, 4) AS yr, SUM(s.revenue_gbp) AS revenue
+  FROM sales s JOIN products p USING (product_id)
+  WHERE p.category = 'Energy' AND substr(s.month, 1, 4) IN ('2024', '2025')
+  GROUP BY yr
+)
+SELECT ROUND((MAX(CASE WHEN yr = '2025' THEN revenue END)
+             - MAX(CASE WHEN yr = '2024' THEN revenue END)) * 100.0
+             / MAX(CASE WHEN yr = '2024' THEN revenue END), 1) AS growth_pct
+FROM y;",
+full,q11,core,growth,3,True,correct,,By what percent did Energy revenue grow from 2024 to 2025?,"WITH y AS (
+  SELECT substr(s.month, 1, 4) AS yr, SUM(s.revenue_gbp) AS revenue
+  FROM sales s JOIN products p USING (product_id)
+  WHERE p.category = 'Energy' AND substr(s.month, 1, 4) IN ('2024', '2025')
+  GROUP BY yr
+)
+SELECT ROUND((MAX(CASE WHEN yr = '2025' THEN revenue END)
+             - MAX(CASE WHEN yr = '2024' THEN revenue END)) * 100.0
+             / MAX(CASE WHEN yr = '2024' THEN revenue END), 1) AS growth_pct
+FROM y;",
+full,q12,core,growth,1,True,correct,,"How did Carbonated volume in the South in July 2024 compare with July 2023, in percent?","WITH y AS (
+  SELECT substr(s.month, 1, 4) AS yr, SUM(s.volume_cases) AS cases
+  FROM sales s
+  JOIN products p USING (product_id)
+  JOIN regions r USING (region_id)
+  WHERE p.category = 'Carbonated'
+    AND r.region_name = 'South'
+    AND s.month IN ('2023-07', '2024-07')
+  GROUP BY yr
+)
+SELECT ROUND((MAX(CASE WHEN yr = '2024' THEN cases END)
+             - MAX(CASE WHEN yr = '2023' THEN cases END)) * 100.0
+             / MAX(CASE WHEN yr = '2023' THEN cases END), 1) AS growth_pct
+FROM y;",
+full,q12,core,growth,2,True,correct,,"How did Carbonated volume in the South in July 2024 compare with July 2023, in percent?","WITH y AS (
+  SELECT substr(s.month, 1, 4) AS yr, SUM(s.volume_cases) AS cases
+  FROM sales s
+  JOIN products p USING (product_id)
+  JOIN regions r USING (region_id)
+  WHERE p.category = 'Carbonated'
+    AND r.region_name = 'South'
+    AND s.month IN ('2023-07', '2024-07')
+  GROUP BY yr
+)
+SELECT ROUND((MAX(CASE WHEN yr = '2024' THEN cases END)
+             - MAX(CASE WHEN yr = '2023' THEN cases END)) * 100.0
+             / MAX(CASE WHEN yr = '2023' THEN cases END), 1) AS growth_pct
+FROM y;",
+full,q12,core,growth,3,True,correct,,"How did Carbonated volume in the South in July 2024 compare with July 2023, in percent?","WITH y AS (
+  SELECT substr(s.month, 1, 4) AS yr, SUM(s.volume_cases) AS cases
+  FROM sales s
+  JOIN products p USING (product_id)
+  JOIN regions r USING (region_id)
+  WHERE p.category = 'Carbonated'
+    AND r.region_name = 'South'
+    AND s.month IN ('2023-07', '2024-07')
+  GROUP BY yr
+)
+SELECT ROUND((MAX(CASE WHEN yr = '2024' THEN cases END)
+             - MAX(CASE WHEN yr = '2023' THEN cases END)) * 100.0
+             / MAX(CASE WHEN yr = '2023' THEN cases END), 1) AS growth_pct
+FROM y;",
+full,q13,core,ratio,1,True,correct,,"What share of 2025 revenue came from sales on promotion, in percent?","SELECT ROUND(SUM(CASE WHEN on_promotion = 1 THEN revenue_gbp ELSE 0 END) * 100.0 / SUM(revenue_gbp), 1) AS promo_revenue_share_pct FROM sales WHERE month LIKE '2025-%';",
+full,q13,core,ratio,2,True,correct,,"What share of 2025 revenue came from sales on promotion, in percent?","SELECT ROUND(SUM(CASE WHEN on_promotion = 1 THEN revenue_gbp ELSE 0 END) * 100.0 / SUM(revenue_gbp), 1) AS promo_revenue_share_pct FROM sales WHERE month LIKE '2025-%';",
+full,q13,core,ratio,3,True,correct,,"What share of 2025 revenue came from sales on promotion, in percent?","SELECT ROUND(SUM(CASE WHEN on_promotion = 1 THEN revenue_gbp ELSE 0 END) * 100.0 / SUM(revenue_gbp), 1) AS promo_revenue_share_pct FROM sales WHERE month LIKE '2025-%';",
+full,q14,core,ratio,1,True,correct,,What was the average revenue per case for each category in 2025?,"SELECT p.category, ROUND(SUM(s.revenue_gbp) / SUM(s.volume_cases), 2) AS avg_revenue_per_case_gbp FROM sales s JOIN products p USING (product_id) WHERE s.month LIKE '2025-%' GROUP BY p.category ORDER BY avg_revenue_per_case_gbp DESC;",
+full,q14,core,ratio,2,True,correct,,What was the average revenue per case for each category in 2025?,"-- Assumption: ""revenue per case"" is total revenue divided by total volume cases, per category, for months in 2025.
+SELECT p.category,
+       ROUND(SUM(s.revenue_gbp) / SUM(s.volume_cases), 2) AS revenue_per_case_gbp
+FROM sales s
+JOIN products p USING (product_id)
+WHERE s.month LIKE '2025-%'
+GROUP BY p.category
+ORDER BY p.category;","""revenue per case"" is total revenue divided by total volume cases, per category, for months in 2025."
+full,q14,core,ratio,3,True,correct,,What was the average revenue per case for each category in 2025?,"SELECT p.category, ROUND(SUM(s.revenue_gbp) * 1.0 / SUM(s.volume_cases), 2) AS avg_revenue_per_case_gbp FROM sales s JOIN products p USING (product_id) WHERE s.month LIKE '2025-%' GROUP BY p.category ORDER BY avg_revenue_per_case_gbp DESC;",
+full,q15,core,lookup,1,True,correct,,Which products were launched in 2024?,"SELECT product_name, category, launch_month FROM products WHERE launch_month LIKE '2024-%' ORDER BY launch_month, product_name;",
+full,q15,core,lookup,2,True,correct,,Which products were launched in 2024?,"SELECT product_name, category, launch_month FROM products WHERE launch_month LIKE '2024-%' ORDER BY launch_month, product_name;",
+full,q15,core,lookup,3,True,correct,,Which products were launched in 2024?,"SELECT product_name, category, launch_month FROM products WHERE launch_month LIKE '2024-%' ORDER BY launch_month, product_name;",
+full,q16,core,lookup,1,True,correct,,"Which product was delisted, and what was its last month on sale?","SELECT product_name, delist_after AS last_month_on_sale FROM products WHERE delist_after IS NOT NULL ORDER BY delist_after DESC;",
+full,q16,core,lookup,2,True,correct,,"Which product was delisted, and what was its last month on sale?","-- Assumption: ""delisted"" means products with a non-NULL delist_after; the last month on sale is delist_after.
+SELECT product_name AS product, delist_after AS last_month_on_sale
+FROM products
+WHERE delist_after IS NOT NULL
+ORDER BY delist_after DESC;","""delisted"" means products with a non-NULL delist_after; the last month on sale is delist_after."
+full,q16,core,lookup,3,True,correct,,"Which product was delisted, and what was its last month on sale?","SELECT product_name AS delisted_product, delist_after AS last_month_on_sale FROM products WHERE delist_after IS NOT NULL ORDER BY delist_after DESC;",
+full,q17,core,lookup,1,True,correct,,"How many promotions were planned in 2025, and what was their average discount?","SELECT COUNT(*) AS promotions_planned_2025, ROUND(AVG(discount_pct), 1) AS avg_discount_pct FROM promotions WHERE month LIKE '2025-%';",
+full,q17,core,lookup,2,True,correct,,"How many promotions were planned in 2025, and what was their average discount?","SELECT COUNT(*) AS planned_promotions, ROUND(AVG(discount_pct), 1) AS avg_discount_pct FROM promotions WHERE month LIKE '2025-%';",
+full,q17,core,lookup,3,True,correct,,"How many promotions were planned in 2025, and what was their average discount?","SELECT COUNT(*) AS promotions_planned_2025, ROUND(AVG(discount_pct), 1) AS avg_discount_pct FROM promotions WHERE month LIKE '2025-%';",
+full,q18,core,refuse,1,True,correct,"the database holds no customer-level data (only regions, products, promotions and monthly sales by region and product), so it cannot show which customer bought the most.",Which customer bought the most Cola 330ml in 2025?,,
+full,q18,core,refuse,2,True,correct,"the database has no customer information; sales are recorded only by month, region and product.",Which customer bought the most Cola 330ml in 2025?,,
+full,q18,core,refuse,3,True,correct,"the database has no customer data; sales are recorded only by month, region and product, so individual customers cannot be identified.",Which customer bought the most Cola 330ml in 2025?,,
+full,q19,core,refuse,1,True,correct,"the database has no weather data, so the effect of hot weather cannot be isolated from sales.",How much did hot weather increase Water sales last summer?,,
+full,q19,core,refuse,2,True,correct,"the database has no weather data, so the effect of hot weather cannot be isolated from sales.",How much did hot weather increase Water sales last summer?,,
+full,q19,core,refuse,3,True,correct,"the database has no weather data, so the effect of hot weather on Water sales cannot be determined.",How much did hot weather increase Water sales last summer?,,
+full,q20,core,refuse,1,True,correct,"the database has no store-level data, so the number of stores stocking a product cannot be determined.",How many stores stock Energy Original 250ml?,,
+full,q20,core,refuse,2,True,correct,"the database has no store-level data, so the number of stores stocking a product cannot be determined.",How many stores stock Energy Original 250ml?,,
+full,q20,core,refuse,3,True,correct,"the database has no store-level data, so it cannot show how many stores stock Energy Original 250ml.",How many stores stock Energy Original 250ml?,,
+full,h01,hard,aggregation-level,1,True,correct,,What was the average monthly volume for each region in 2025?,"SELECT r.region_name, ROUND(SUM(s.volume_cases) * 1.0 / COUNT(DISTINCT s.month), 1) AS avg_monthly_volume_cases
+FROM sales s JOIN regions r USING (region_id)
+WHERE s.month LIKE '2025-%'
+GROUP BY r.region_name ORDER BY avg_monthly_volume_cases DESC;",
+full,h01,hard,aggregation-level,2,True,correct,,What was the average monthly volume for each region in 2025?,"SELECT r.region_name, ROUND(SUM(s.volume_cases) * 1.0 / COUNT(DISTINCT s.month), 1) AS avg_monthly_volume_cases
+FROM sales s JOIN regions r USING (region_id)
+WHERE s.month LIKE '2025-%'
+GROUP BY r.region_name ORDER BY avg_monthly_volume_cases DESC;",
+full,h01,hard,aggregation-level,3,True,correct,,What was the average monthly volume for each region in 2025?,"SELECT r.region_name, ROUND(SUM(s.volume_cases) * 1.0 / COUNT(DISTINCT s.month), 1) AS avg_monthly_volume_cases
+FROM sales s JOIN regions r USING (region_id)
+WHERE s.month LIKE '2025-%'
+GROUP BY r.region_name ORDER BY avg_monthly_volume_cases DESC;",
+full,h02,hard,aggregation-level,1,True,correct,,How many different products were promoted in 2025?,SELECT COUNT(DISTINCT product_id) AS products_promoted_2025 FROM promotions WHERE month LIKE '2025-%';,
+full,h02,hard,aggregation-level,2,True,correct,,How many different products were promoted in 2025?,SELECT COUNT(DISTINCT product_id) AS products_promoted_2025 FROM promotions WHERE month LIKE '2025-%';,
+full,h02,hard,aggregation-level,3,True,correct,,How many different products were promoted in 2025?,SELECT COUNT(DISTINCT product_id) AS products_promoted_2025 FROM promotions WHERE month LIKE '2025-%';,
+full,h03,hard,aggregation-level,1,True,correct,,"What share of the South's 2025 volume came from Carbonated drinks, in percent?","SELECT ROUND(SUM(CASE WHEN p.category = 'Carbonated' THEN s.volume_cases ELSE 0 END) * 100.0 / SUM(s.volume_cases), 1) AS carbonated_share_pct FROM sales s JOIN regions r USING (region_id) JOIN products p USING (product_id) WHERE r.region_name = 'South' AND s.month LIKE '2025-%';",
+full,h03,hard,aggregation-level,2,True,correct,,"What share of the South's 2025 volume came from Carbonated drinks, in percent?","SELECT ROUND(SUM(CASE WHEN p.category = 'Carbonated' THEN s.volume_cases ELSE 0 END) * 100.0 / SUM(s.volume_cases), 1) AS carbonated_share_pct FROM sales s JOIN regions r USING (region_id) JOIN products p USING (product_id) WHERE r.region_name = 'South' AND s.month LIKE '2025-%';",
+full,h03,hard,aggregation-level,3,True,correct,,"What share of the South's 2025 volume came from Carbonated drinks, in percent?","SELECT ROUND(SUM(CASE WHEN p.category = 'Carbonated' THEN s.volume_cases ELSE 0 END) * 100.0 / SUM(s.volume_cases), 1) AS carbonated_share_pct FROM sales s JOIN regions r USING (region_id) JOIN products p USING (product_id) WHERE r.region_name = 'South' AND s.month LIKE '2025-%';",
+full,h04,hard,time,1,True,correct,,What was total revenue over the last three months?,"-- Assumption: the data ends in 2025-12, so the last three months are 2025-10 to 2025-12.
+SELECT ROUND(SUM(revenue_gbp), 2) AS total_revenue_gbp FROM sales WHERE month BETWEEN '2025-10' AND '2025-12';","the data ends in 2025-12, so the last three months are 2025-10 to 2025-12."
+full,h04,hard,time,2,True,correct,,What was total revenue over the last three months?,"-- Assumption: the data ends in 2025-12, so the last three months are 2025-10 to 2025-12.
+SELECT ROUND(SUM(revenue_gbp), 2) AS revenue_last_3_months FROM sales WHERE month BETWEEN '2025-10' AND '2025-12';","the data ends in 2025-12, so the last three months are 2025-10 to 2025-12."
+full,h04,hard,time,3,True,correct,,What was total revenue over the last three months?,"-- Assumption: the data ends in 2025-12, so the last three months are 2025-10 to 2025-12.
+SELECT ROUND(SUM(revenue_gbp), 2) AS revenue_last_3_months
+FROM sales
+WHERE month BETWEEN '2025-10' AND '2025-12';","the data ends in 2025-12, so the last three months are 2025-10 to 2025-12."
+full,h05,hard,time,1,True,correct,,Which month in 2025 had the biggest month-on-month increase in total volume?,"-- Assumption: ""total volume"" means all products and regions combined; month-on-month increase is the change from the previous month, and the first month (2025-01) is compared against 2024-12.
+WITH monthly AS (
+  SELECT month, SUM(volume_cases) AS cases
+  FROM sales
+  WHERE month BETWEEN '2024-12' AND '2025-12'
+  GROUP BY month
+),
+diffs AS (
+  SELECT month,
+         cases - LAG(cases) OVER (ORDER BY month) AS increase_cases
+  FROM monthly
+)
+SELECT month, increase_cases AS volume_increase_cases
+FROM diffs
+WHERE month LIKE '2025-%'
+ORDER BY increase_cases DESC
+LIMIT 1;","""total volume"" means all products and regions combined; month-on-month increase is the change from the previous month, and the first month (2025-01) is compared against 2024-12."
+full,h05,hard,time,2,True,correct,,Which month in 2025 had the biggest month-on-month increase in total volume?,"-- Assumption: ""biggest month-on-month increase"" means the largest rise in total volume_cases from the prior month, across all regions and products, for months in 2025. January 2025 is compared against December 2024.
+WITH monthly AS (
+  SELECT month, SUM(volume_cases) AS cases
+  FROM sales
+  WHERE month BETWEEN '2024-12' AND '2025-12'
+  GROUP BY month
+),
+changes AS (
+  SELECT month,
+         cases - LAG(cases) OVER (ORDER BY month) AS increase_cases
+  FROM monthly
+)
+SELECT month, increase_cases
+FROM changes
+WHERE month LIKE '2025-%'
+ORDER BY increase_cases DESC
+LIMIT 1;","""biggest month-on-month increase"" means the largest rise in total volume_cases from the prior month, across all regions and products, for months in 2025. January 2025 is compared against December 2024."
+full,h05,hard,time,3,True,correct,,Which month in 2025 had the biggest month-on-month increase in total volume?,"SELECT month, total_volume, prev_volume, total_volume - prev_volume AS increase_cases
+FROM (
+  SELECT month,
+         SUM(volume_cases) AS total_volume,
+         LAG(SUM(volume_cases)) OVER (ORDER BY month) AS prev_volume
+  FROM sales
+  WHERE month BETWEEN '2024-12' AND '2025-12'
+  GROUP BY month
+)
+WHERE month LIKE '2025-%' AND prev_volume IS NOT NULL
+ORDER BY increase_cases DESC
+LIMIT 1;",
+full,h06,hard,time,1,True,correct,,Which products sold in every month of 2025?,"SELECT p.product_name
+FROM sales s JOIN products p USING (product_id)
+WHERE s.month LIKE '2025-%'
+GROUP BY p.product_id, p.product_name
+HAVING COUNT(DISTINCT s.month) = 12
+ORDER BY p.product_name;",
+full,h06,hard,time,2,False,error,The generated query was blocked (only SELECT queries are allowed). I can't answer that reliably.,Which products sold in every month of 2025?,"The question asks for products with sales in all 12 months of 2025. I'll count distinct months per product in 2025 and keep those with 12.
+
+SELECT p.product_name
+FROM sales s JOIN products p USING (product_id)
+WHERE s.month LIKE '2025-%'
+GROUP BY p.product_name
+HAVING COUNT(DISTINCT s.month) = 12
+ORDER BY p.product_name;",
+full,h06,hard,time,3,False,error,The generated query was blocked (only SELECT queries are allowed). I can't answer that reliably.,Which products sold in every month of 2025?,"The question asks for products with sales in all 12 months of 2025. The sales table has one row per month x region x product on sale, so I count distinct months per product.
+
+SELECT p.product_name
+FROM sales s JOIN products p USING (product_id)
+WHERE s.month LIKE '2025-%'
+GROUP BY p.product_name
+HAVING COUNT(DISTINCT s.month) = 12
+ORDER BY p.product_name;",
+full,h07,hard,top-per-group,1,True,correct,,What was the best-selling product by volume in each region in 2025?,"-- Assumption: ""best-selling"" means highest total volume_cases in 2025; ties are not broken specially.
+WITH rp AS (
+  SELECT s.region_id, s.product_id, SUM(s.volume_cases) AS cases
+  FROM sales s
+  WHERE s.month LIKE '2025-%'
+  GROUP BY s.region_id, s.product_id
+),
+ranked AS (
+  SELECT rp.region_id, rp.product_id, rp.cases,
+         ROW_NUMBER() OVER (PARTITION BY rp.region_id ORDER BY rp.cases DESC) AS rn
+  FROM rp
+)
+SELECT r.region_name, p.product_name, rk.cases AS volume_cases
+FROM ranked rk
+JOIN regions r ON r.region_id = rk.region_id
+JOIN products p ON p.product_id = rk.product_id
+WHERE rk.rn = 1
+ORDER BY r.region_name;","""best-selling"" means highest total volume_cases in 2025; ties are not broken specially."
+full,h07,hard,top-per-group,2,True,correct,,What was the best-selling product by volume in each region in 2025?,"-- Assumption: ""best-selling"" means highest total volume_cases in 2025; ties are not broken further.
+WITH rp AS (
+  SELECT s.region_id, s.product_id, SUM(s.volume_cases) AS cases
+  FROM sales s
+  WHERE s.month LIKE '2025-%'
+  GROUP BY s.region_id, s.product_id
+),
+ranked AS (
+  SELECT rp.region_id, rp.product_id, rp.cases,
+         RANK() OVER (PARTITION BY rp.region_id ORDER BY rp.cases DESC) AS rnk
+  FROM rp
+)
+SELECT r.region_name, p.product_name, rk.cases AS volume_cases
+FROM ranked rk
+JOIN regions r ON r.region_id = rk.region_id
+JOIN products p ON p.product_id = rk.product_id
+WHERE rk.rnk = 1
+ORDER BY r.region_name;","""best-selling"" means highest total volume_cases in 2025; ties are not broken further."
+full,h07,hard,top-per-group,3,True,correct,,What was the best-selling product by volume in each region in 2025?,"-- Assumption: ""best-selling"" means highest total volume_cases in 2025; ties are not broken specially.
+WITH rp AS (
+  SELECT s.region_id, s.product_id, SUM(s.volume_cases) AS cases
+  FROM sales s
+  WHERE s.month LIKE '2025-%'
+  GROUP BY s.region_id, s.product_id
+),
+ranked AS (
+  SELECT rp.region_id, rp.product_id, rp.cases,
+         ROW_NUMBER() OVER (PARTITION BY rp.region_id ORDER BY rp.cases DESC) AS rn
+  FROM rp
+)
+SELECT r.region_name, p.product_name, rk.cases AS volume_cases
+FROM ranked rk
+JOIN regions r ON r.region_id = rk.region_id
+JOIN products p ON p.product_id = rk.product_id
+WHERE rk.rn = 1
+ORDER BY r.region_name;","""best-selling"" means highest total volume_cases in 2025; ties are not broken specially."
+full,h08,hard,top-per-group,1,True,correct,,"Which category grew fastest in revenue from 2023 to 2025, and by how much in percent?","-- Assumption: ""grew fastest from 2023 to 2025"" means comparing full-year 2023 revenue with full-year 2025 revenue for each category, and ranking by percentage growth.
+WITH y AS (
+  SELECT p.category,
+         SUM(CASE WHEN s.month LIKE '2023-%' THEN s.revenue_gbp END) AS rev_2023,
+         SUM(CASE WHEN s.month LIKE '2025-%' THEN s.revenue_gbp END) AS rev_2025
+  FROM sales s JOIN products p USING (product_id)
+  WHERE s.month LIKE '2023-%' OR s.month LIKE '2025-%'
+  GROUP BY p.category
+)
+SELECT category,
+       ROUND(rev_2023, 2) AS revenue_2023_gbp,
+       ROUND(rev_2025, 2) AS revenue_2025_gbp,
+       ROUND((rev_2025 - rev_2023) * 100.0 / rev_2023, 1) AS growth_pct
+FROM y
+ORDER BY growth_pct DESC
+LIMIT 1;","""grew fastest from 2023 to 2025"" means comparing full-year 2023 revenue with full-year 2025 revenue for each category, and ranking by percentage growth."
+full,h08,hard,top-per-group,2,False,error,The generated query was blocked (only SELECT queries are allowed). I can't answer that reliably.,"Which category grew fastest in revenue from 2023 to 2025, and by how much in percent?","I'll compare full-year revenue per category for 2023 and 2025, then compute the growth percentage and pick the highest.
+
+-- Assumption: ""grew from 2023 to 2025"" means full-year 2023 revenue compared with full-year 2025 revenue, by category.
+WITH y AS (
+  SELECT p.category,
+         SUM(CASE WHEN s.month LIKE '2023-%' THEN s.revenue_gbp ELSE 0 END) AS rev_2023,
+         SUM(CASE WHEN s.month LIKE '2025-%' THEN s.revenue_gbp ELSE 0 END) AS rev_2025
+  FROM sales s JOIN products p USING (product_id)
+  WHERE s.month LIKE '2023-%' OR s.month LIKE '2025-%'
+  GROUP BY p.category
+)
+SELECT category,
+       ROUND(rev_2023, 2) AS revenue_2023_gbp,
+       ROUND(rev_2025, 2) AS revenue_2025_gbp,
+       ROUND((rev_2025 - rev_2023) * 100.0 / rev_2023, 1) AS growth_pct
+FROM y
+ORDER BY growth_pct DESC
+LIMIT 1;","""grew from 2023 to 2025"" means full-year 2023 revenue compared with full-year 2025 revenue, by category."
+full,h08,hard,top-per-group,3,True,correct,,"Which category grew fastest in revenue from 2023 to 2025, and by how much in percent?","WITH y AS (
+  SELECT p.category,
+         SUM(CASE WHEN s.month LIKE '2023-%' THEN s.revenue_gbp ELSE 0 END) AS rev_2023,
+         SUM(CASE WHEN s.month LIKE '2025-%' THEN s.revenue_gbp ELSE 0 END) AS rev_2025
+  FROM sales s JOIN products p USING (product_id)
+  WHERE s.month LIKE '2023-%' OR s.month LIKE '2025-%'
+  GROUP BY p.category
+)
+SELECT category,
+       ROUND(rev_2023, 2) AS revenue_2023_gbp,
+       ROUND(rev_2025, 2) AS revenue_2025_gbp,
+       ROUND((rev_2025 - rev_2023) * 100.0 / rev_2023, 1) AS growth_pct
+FROM y
+ORDER BY growth_pct DESC
+LIMIT 1;",
+full,h09,hard,definition,1,True,correct,,"Excluding products launched in 2024, how did total volume change from 2024 to 2025, in percent?","WITH y AS (
+  SELECT substr(s.month, 1, 4) AS yr, SUM(s.volume_cases) AS cases
+  FROM sales s JOIN products p USING (product_id)
+  WHERE substr(s.month, 1, 4) IN ('2024', '2025')
+    AND substr(p.launch_month, 1, 4) <> '2024'
+  GROUP BY yr
+)
+SELECT ROUND((MAX(CASE WHEN yr = '2025' THEN cases END)
+             - MAX(CASE WHEN yr = '2024' THEN cases END)) * 100.0
+             / MAX(CASE WHEN yr = '2024' THEN cases END), 1) AS volume_growth_pct
+FROM y;",
+full,h09,hard,definition,2,False,error,The generated query was blocked (only SELECT queries are allowed). I can't answer that reliably.,"Excluding products launched in 2024, how did total volume change from 2024 to 2025, in percent?","I'm going to read ""products launched in 2024"" as products whose launch_month falls in 2024, and exclude them from both years so the comparison is like-for-like.
+
+-- Assumption: ""excluding products launched in 2024"" means removing any product with launch_month in 2024 from both years, so the comparison covers only products that were on sale before 2024.
+WITH excluded AS (
+  SELECT product_id FROM products WHERE launch_month LIKE '2024-%'
+),
+y AS (
+  SELECT substr(s.month, 1, 4) AS yr, SUM(s.volume_cases) AS cases
+  FROM sales s
+  WHERE substr(s.month, 1, 4) IN ('2024', '2025')
+    AND s.product_id NOT IN (SELECT product_id FROM excluded)
+  GROUP BY yr
+)
+SELECT ROUND((MAX(CASE WHEN yr = '2025' THEN cases END)
+             - MAX(CASE WHEN yr = '2024' THEN cases END)) * 100.0
+             / MAX(CASE WHEN yr = '2024' THEN cases END), 1) AS volume_growth_pct
+FROM y;","""excluding products launched in 2024"" means removing any product with launch_month in 2024 from both years, so the comparison covers only products that were on sale before 2024."
+full,h09,hard,definition,3,False,error,The generated query was blocked (only SELECT queries are allowed). I can't answer that reliably.,"Excluding products launched in 2024, how did total volume change from 2024 to 2025, in percent?","I'll interpret ""products launched in 2024"" as products whose launch_month falls in 2024, excluded from both years so the comparison is like-for-like.
+
+-- Assumption: ""excluding products launched in 2024"" removes those products from both years, so the comparison covers only products launched before 2024 or in 2025 and later.
+WITH y AS (
+  SELECT substr(s.month, 1, 4) AS yr, SUM(s.volume_cases) AS cases
+  FROM sales s JOIN products p USING (product_id)
+  WHERE substr(s.month, 1, 4) IN ('2024', '2025')
+    AND substr(p.launch_month, 1, 4) <> '2024'
+  GROUP BY yr
+)
+SELECT ROUND((MAX(CASE WHEN yr = '2025' THEN cases END)
+             - MAX(CASE WHEN yr = '2024' THEN cases END)) * 100.0
+             / MAX(CASE WHEN yr = '2024' THEN cases END), 1) AS growth_pct
+FROM y;","""excluding products launched in 2024"" removes those products from both years, so the comparison covers only products launched before 2024 or in 2025 and later."
+full,h10,hard,definition,1,True,correct,,What was the average discount on Energy promotions in 2025?,"SELECT ROUND(AVG(pr.discount_pct), 1) AS avg_discount_pct_energy_promos_2025
+FROM promotions pr
+JOIN products p USING (product_id)
+WHERE p.category = 'Energy' AND pr.month LIKE '2025-%';",
+full,h10,hard,definition,2,True,correct,,What was the average discount on Energy promotions in 2025?,"SELECT ROUND(AVG(pr.discount_pct), 1) AS avg_discount_pct_energy_2025
+FROM promotions pr JOIN products p USING (product_id)
+WHERE p.category = 'Energy' AND pr.month LIKE '2025-%';",
+full,h10,hard,definition,3,True,correct,,What was the average discount on Energy promotions in 2025?,"SELECT ROUND(AVG(pr.discount_pct), 1) AS avg_discount_pct_energy_2025
+FROM promotions pr JOIN products p USING (product_id)
+WHERE p.category = 'Energy' AND pr.month LIKE '2025-%';",
+full,h11,hard,definition,1,True,correct,,"For products that have ever been promoted, what were average cases per product, region and month in 2025, on promotion versus not on promotion?","-- Assumption: ""ever been promoted"" means products with at least one row in the promotions table; the comparison uses the sales table's on_promotion flag for 2025 rows only.
+
+SELECT CASE WHEN s.on_promotion = 1 THEN 'On promotion' ELSE 'Not on promotion' END AS promotion_status,
+       ROUND(AVG(s.volume_cases), 1) AS avg_cases_per_product_region_month,
+       COUNT(*) AS product_region_months
+FROM sales s
+WHERE s.month LIKE '2025-%'
+  AND s.product_id IN (SELECT DISTINCT product_id FROM promotions)
+GROUP BY s.on_promotion
+ORDER BY s.on_promotion DESC;","""ever been promoted"" means products with at least one row in the promotions table; the comparison uses the sales table's on_promotion flag for 2025 rows only."
+full,h11,hard,definition,2,True,correct,,"For products that have ever been promoted, what were average cases per product, region and month in 2025, on promotion versus not on promotion?","-- Assumption: ""on promotion"" means sales rows with on_promotion = 1; ""not on promotion"" means on_promotion = 0; only products that appear in the promotions table are included; averages are per product-region-month row in 2025.
+SELECT CASE WHEN s.on_promotion = 1 THEN 'On promotion' ELSE 'Not on promotion' END AS promotion_status,
+       ROUND(AVG(s.volume_cases), 1) AS avg_cases_per_product_region_month,
+       COUNT(*) AS row_count
+FROM sales s
+WHERE s.month LIKE '2025-%'
+  AND s.product_id IN (SELECT DISTINCT product_id FROM promotions)
+GROUP BY s.on_promotion
+ORDER BY s.on_promotion DESC;","""on promotion"" means sales rows with on_promotion = 1; ""not on promotion"" means on_promotion = 0; only products that appear in the promotions table are included; averages are per product-region-month row in 2025."
+full,h11,hard,definition,3,True,correct,,"For products that have ever been promoted, what were average cases per product, region and month in 2025, on promotion versus not on promotion?","-- Assumption: ""on promotion"" is taken from the on_promotion flag in the sales table; averages are per product-region-month rows in 2025 for products that appear in the promotions table at least once.
+SELECT
+  CASE WHEN s.on_promotion = 1 THEN 'On promotion' ELSE 'Not on promotion' END AS promotion_status,
+  ROUND(AVG(s.volume_cases), 1) AS avg_cases_per_product_region_month,
+  COUNT(*) AS product_region_month_rows
+FROM sales s
+WHERE s.month LIKE '2025-%'
+  AND s.product_id IN (SELECT DISTINCT product_id FROM promotions)
+GROUP BY s.on_promotion
+ORDER BY s.on_promotion DESC;","""on promotion"" is taken from the on_promotion flag in the sales table; averages are per product-region-month rows in 2025 for products that appear in the promotions table at least once."
+full,h12,hard,refuse,1,True,correct,"the database has no competitor or total-market sales data, so market share cannot be calculated.",What was our market share in Carbonated drinks in 2025?,,
+full,h12,hard,refuse,2,True,correct,"The database has no competitor or total-market data, so market share cannot be calculated.",What was our market share in Carbonated drinks in 2025?,,
+full,h12,hard,refuse,3,True,correct,"the database has no competitor or total market sales data, so market share cannot be calculated.",What was our market share in Carbonated drinks in 2025?,,
+full,h13,hard,refuse,1,True,correct,"ROI requires promotion costs or spend, which the database does not contain; it only has planned discount percentages and planned uplift, with no cost data to measure return against.",Which promotion gave the best return on investment?,,
+full,h13,hard,refuse,2,True,correct,"ROI requires promotion costs or spend, which the database does not contain; it only holds planned discount percentages and planned uplift, not the cost of running the promotions.",Which promotion gave the best return on investment?,,
+full,h13,hard,refuse,3,True,correct,"ROI needs promotion cost or spend data, and the database only holds the planned promotion calendar (discount and planned uplift), with no cost of promotions or profit figures to measure return against.",Which promotion gave the best return on investment?,,
+full,h14,hard,refuse,1,True,correct,"the database holds only historical sales through 2025-12 and no forecasting or planning data for 2026, so March 2026 volume cannot be determined.",What will total volume be in March 2026?,,
+full,h14,hard,refuse,2,True,correct,"the database holds only historical sales through 2025-12 and contains no forecasting data or model, so March 2026 volume cannot be determined from it.",What will total volume be in March 2026?,,
+full,h14,hard,refuse,3,True,correct,"the database only holds actual sales from 2023-01 to 2025-12, so it contains no data to forecast volume for March 2026.",What will total volume be in March 2026?,,
+full,h15,hard,refuse,1,True,correct,"the database records sales, volumes, prices and promotions, but holds no data on causes such as competitors, weather, distribution or stock, so the reason for the drop cannot be determined from it.",Why did Carbonated sales in the South drop in July 2024?,,
+full,h15,hard,refuse,2,True,correct,"the database records sales, prices and the promotion calendar, but it holds no information on causes such as competitor activity, weather, distribution or stock issues, so the reason for the drop cannot be determined from this data.",Why did Carbonated sales in the South drop in July 2024?,,
+full,h15,hard,refuse,3,True,correct,"the database records sales, volume, prices and planned promotions, but holds no data on causes such as competitor activity, weather, distribution or stock issues, so it cannot explain why sales dropped.",Why did Carbonated sales in the South drop in July 2024?,,
+full,x01,holdout,time,1,True,correct,,What was revenue in the most recent full year?,"-- Assumption: the data ends in 2025-12, so the most recent full year is 2025.
+SELECT ROUND(SUM(revenue_gbp), 2) AS revenue_2025 FROM sales WHERE month LIKE '2025-%';","the data ends in 2025-12, so the most recent full year is 2025."
+full,x01,holdout,time,2,True,correct,,What was revenue in the most recent full year?,"-- Assumption: the data ends in 2025-12, so the most recent full year is 2025.
+SELECT ROUND(SUM(revenue_gbp), 2) AS revenue_2025 FROM sales WHERE month LIKE '2025-%';","the data ends in 2025-12, so the most recent full year is 2025."
+full,x01,holdout,time,3,True,correct,,What was revenue in the most recent full year?,"-- Assumption: the data ends in 2025-12, so the most recent full year is 2025.
+SELECT ROUND(SUM(revenue_gbp), 2) AS revenue_2025 FROM sales WHERE month LIKE '2025-%';","the data ends in 2025-12, so the most recent full year is 2025."
+full,x02,holdout,time,1,False,error,The generated query was blocked (only SELECT queries are allowed). I can't answer that reliably.,Which products have we stopped selling?,"Products stopped selling would be those with a delist_after date set (not NULL). The question doesn't specify a time reference, but ""have stopped selling"" means delist_after is populated and in the past relative to the data end (2025-12).
+
+-- Assumption: ""stopped selling"" means products with a non-NULL delist_after that falls on or before the end of the data (2025-12).
+SELECT product_name, category, launch_month, delist_after
+FROM products
+WHERE delist_after IS NOT NULL AND delist_after <= '2025-12'
+ORDER BY delist_after;","""stopped selling"" means products with a non-NULL delist_after that falls on or before the end of the data (2025-12)."
+full,x02,holdout,time,2,False,error,The generated query was blocked (only SELECT queries are allowed). I can't answer that reliably.,Which products have we stopped selling?,"Products we have stopped selling would be those with a non-NULL delist_after date. However, ""stopped selling"" could also mean products with no sales in the most recent months. I'll use the delist_after field, since it records the last month on sale.
+
+-- Assumption: ""stopped selling"" means products with a delist_after date set (last month on sale), not products with merely quiet recent sales.
+SELECT product_name, category, launch_month, delist_after
+FROM products
+WHERE delist_after IS NOT NULL
+ORDER BY delist_after DESC, product_name;","""stopped selling"" means products with a delist_after date set (last month on sale), not products with merely quiet recent sales."
+full,x02,holdout,time,3,False,error,The generated query was blocked (only SELECT queries are allowed). I can't answer that reliably.,Which products have we stopped selling?,"Products we've stopped selling are those with a delist_after date set. But ""stopped selling"" could also mean no sales in the latest months, so I'll use the delist date, which is what the schema records.
+
+-- Assumption: ""stopped selling"" means products with a delist_after date set in the products table (last month on sale is before the data end).
+SELECT product_name, category, delist_after AS last_month_on_sale
+FROM products
+WHERE delist_after IS NOT NULL
+ORDER BY delist_after DESC, product_name;","""stopped selling"" means products with a delist_after date set in the products table (last month on sale is before the data end)."
+full,x03,holdout,definition,1,True,correct,,What is our biggest region?,"-- Assumption: ""biggest"" means the region with the highest total revenue across all months in the data (2023-01 to 2025-12).
+SELECT r.region_name, ROUND(SUM(s.revenue_gbp), 2) AS total_revenue_gbp
+FROM sales s JOIN regions r USING (region_id)
+GROUP BY r.region_name ORDER BY total_revenue_gbp DESC LIMIT 1;","""biggest"" means the region with the highest total revenue across all months in the data (2023-01 to 2025-12)."
+full,x03,holdout,definition,2,True,correct,,What is our biggest region?,"-- Assumption: ""biggest"" means the region with the highest total revenue across all months in the data (2023-01 to 2025-12).
+SELECT r.region_name, ROUND(SUM(s.revenue_gbp), 2) AS total_revenue_gbp
+FROM sales s JOIN regions r USING (region_id)
+GROUP BY r.region_name ORDER BY total_revenue_gbp DESC LIMIT 1;","""biggest"" means the region with the highest total revenue across all months in the data (2023-01 to 2025-12)."
+full,x03,holdout,definition,3,True,correct,,What is our biggest region?,"-- Assumption: ""biggest"" means the region with the highest total revenue across all months in the data (2023-01 to 2025-12).
+SELECT r.region_name, ROUND(SUM(s.revenue_gbp), 2) AS total_revenue_gbp
+FROM sales s JOIN regions r USING (region_id)
+GROUP BY r.region_name ORDER BY total_revenue_gbp DESC LIMIT 1;","""biggest"" means the region with the highest total revenue across all months in the data (2023-01 to 2025-12)."
+full,x04,holdout,time,1,True,correct,,"How did revenue in the latest quarter compare with the same quarter a year earlier, in percent?","-- Assumption: the data ends in 2025-12, so the latest quarter is Q4 2025 (2025-10 to 2025-12) and the same quarter a year earlier is Q4 2024 (2024-10 to 2024-12).
+WITH q AS (
+  SELECT CASE WHEN month BETWEEN '2025-10' AND '2025-12' THEN 'latest'
+              WHEN month BETWEEN '2024-10' AND '2024-12' THEN 'prior'
+         END AS period,
+         SUM(revenue_gbp) AS revenue
+  FROM sales
+  WHERE month BETWEEN '2024-10' AND '2024-12'
+     OR month BETWEEN '2025-10' AND '2025-12'
+  GROUP BY period
+)
+SELECT ROUND(SUM(CASE WHEN period = 'latest' THEN revenue END), 2) AS revenue_q4_2025_gbp,
+       ROUND(SUM(CASE WHEN period = 'prior' THEN revenue END), 2) AS revenue_q4_2024_gbp,
+       ROUND((MAX(CASE WHEN period = 'latest' THEN revenue END)
+              - MAX(CASE WHEN period = 'prior' THEN revenue END)) * 100.0
+              / MAX(CASE WHEN period = 'prior' THEN revenue END), 1) AS growth_pct
+FROM q;","the data ends in 2025-12, so the latest quarter is Q4 2025 (2025-10 to 2025-12) and the same quarter a year earlier is Q4 2024 (2024-10 to 2024-12)."
+full,x04,holdout,time,2,True,correct,,"How did revenue in the latest quarter compare with the same quarter a year earlier, in percent?","-- Assumption: the data ends in 2025-12, so the latest quarter is Q4 2025 (2025-10 to 2025-12) and the same quarter a year earlier is Q4 2024 (2024-10 to 2024-12).
+WITH q AS (
+  SELECT CASE WHEN month BETWEEN '2025-10' AND '2025-12' THEN 'latest'
+              WHEN month BETWEEN '2024-10' AND '2024-12' THEN 'prior'
+         END AS period,
+         SUM(revenue_gbp) AS revenue
+  FROM sales
+  WHERE month BETWEEN '2024-10' AND '2024-12'
+     OR month BETWEEN '2025-10' AND '2025-12'
+  GROUP BY period
+)
+SELECT ROUND(SUM(CASE WHEN period = 'latest' THEN revenue END), 2) AS revenue_q4_2025_gbp,
+       ROUND(SUM(CASE WHEN period = 'prior' THEN revenue END), 2) AS revenue_q4_2024_gbp,
+       ROUND((MAX(CASE WHEN period = 'latest' THEN revenue END)
+              - MAX(CASE WHEN period = 'prior' THEN revenue END)) * 100.0
+             / MAX(CASE WHEN period = 'prior' THEN revenue END), 1) AS growth_pct
+FROM q;","the data ends in 2025-12, so the latest quarter is Q4 2025 (2025-10 to 2025-12) and the same quarter a year earlier is Q4 2024 (2024-10 to 2024-12)."
+full,x04,holdout,time,3,True,correct,,"How did revenue in the latest quarter compare with the same quarter a year earlier, in percent?","-- Assumption: the data ends in 2025-12, so the latest quarter is Q4 2025 (2025-10 to 2025-12) and the same quarter a year earlier is Q4 2024 (2024-10 to 2024-12).
+WITH q AS (
+  SELECT CASE WHEN month BETWEEN '2025-10' AND '2025-12' THEN 'latest'
+              WHEN month BETWEEN '2024-10' AND '2024-12' THEN 'prior'
+         END AS period,
+         SUM(revenue_gbp) AS revenue
+  FROM sales
+  WHERE month BETWEEN '2024-10' AND '2024-12'
+     OR month BETWEEN '2025-10' AND '2025-12'
+  GROUP BY period
+)
+SELECT ROUND(SUM(CASE WHEN period = 'latest' THEN revenue END), 2) AS revenue_q4_2025_gbp,
+       ROUND(SUM(CASE WHEN period = 'prior' THEN revenue END), 2) AS revenue_q4_2024_gbp,
+       ROUND((MAX(CASE WHEN period = 'latest' THEN revenue END)
+              - MAX(CASE WHEN period = 'prior' THEN revenue END)) * 100.0
+              / MAX(CASE WHEN period = 'prior' THEN revenue END), 1) AS growth_pct
+FROM q;","the data ends in 2025-12, so the latest quarter is Q4 2025 (2025-10 to 2025-12) and the same quarter a year earlier is Q4 2024 (2024-10 to 2024-12)."
+full,x05,holdout,time,1,False,error,The generated query was blocked (only SELECT queries are allowed). I can't answer that reliably.,"Which products are new, meaning launched after we started recording?","The data starts in 2023-01, so ""new"" products are those with launch_month after 2023-01. Assumption: a product counts as new if its launch_month is later than 2023-01, the first month recorded.
+
+SELECT product_name, category, launch_month
+FROM products
+WHERE launch_month > '2023-01'
+ORDER BY launch_month, product_name;",
+full,x05,holdout,time,2,False,error,The generated query was blocked (only SELECT queries are allowed). I can't answer that reliably.,"Which products are new, meaning launched after we started recording?","The data starts in 2023-01, so products launched after that are those with launch_month later than '2023-01'. Assuming ""launched after we started recording"" means launch_month > '2023-01'.
+
+-- Assumption: recording started in 2023-01, so new products are those with launch_month after '2023-01'.
+SELECT product_name, category, launch_month
+FROM products
+WHERE launch_month > '2023-01'
+ORDER BY launch_month, product_name;","recording started in 2023-01, so new products are those with launch_month after '2023-01'."
+full,x05,holdout,time,3,False,error,The generated query was blocked (only SELECT queries are allowed). I can't answer that reliably.,"Which products are new, meaning launched after we started recording?","The data starts in 2023-01, so ""launched after we started recording"" means launch_month later than 2023-01.
+
+-- Assumption: ""new"" means launch_month after 2023-01, the first month in the data.
+SELECT product_name, category, launch_month
+FROM products
+WHERE launch_month > '2023-01'
+ORDER BY launch_month, product_name;","""new"" means launch_month after 2023-01, the first month in the data."
