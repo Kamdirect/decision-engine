@@ -6,8 +6,9 @@ Trust design:
   - The SQL is always shown to the user, so the answer can be checked.
   - Guardrails in code, not just in the prompt: one statement only, SELECT/WITH only,
     no write or admin keywords, a read-only connection, a row cap and a time limit.
-  - The model may refuse ("CANNOT_ANSWER") when the data cannot answer the question.
-    A refusal is a correct answer, not a failure.
+  - The model answers through one of two tools: run_query (SQL, plus any assumption it made)
+    or cannot_answer. A refusal is a correct answer, not a failure.
+  - Any assumption is shown to the user next to the answer.
 """
 
 from __future__ import annotations
@@ -70,18 +71,49 @@ EXAMPLES = [
      "CANNOT_ANSWER: the database has prices and revenue but no costs, so profit cannot be calculated."),
 ]
 
+# Output rules, shared by every prompt version so that prompt comparisons are fair.
+#
+# History (each change was made because an evaluation run showed a problem):
+#  run 2: on questions that need interpreting ("last three months", "every month") the model
+#         wrote a sentence before correct SQL, and the guardrail (correctly) refused to run
+#         prose. 5 of 105 attempts were lost this way.
+#  run 3: asking in the prompt for "SQL only, assumption as a comment" did not fix it: the
+#         holdout questions still failed. A prompt instruction is a request, not a guarantee.
+#  now:   the model must answer by calling one of two TOOLS, so the SQL and the assumption
+#         arrive in separate fields. Prose cannot end up in the SQL field by accident.
+TOOLS = [
+    {"name": "run_query",
+     "description": "Answer the question with one read-only SQLite query.",
+     "input_schema": {"type": "object", "properties": {
+         "sql": {"type": "string",
+                 "description": "Exactly one SELECT or WITH ... SELECT statement. SQL only, no prose."},
+         "assumption": {"type": "string",
+                        "description": "One sentence on how you read an ambiguous question "
+                                       "(e.g. which months 'recent' means). Empty if none was needed."}},
+         "required": ["sql"]}},
+    {"name": "cannot_answer",
+     "description": "Use when the data cannot answer the question, or when the request is unsafe, "
+                    "would change data, or would give a misleading number.",
+     "input_schema": {"type": "object", "properties": {
+         "reason": {"type": "string", "description": "One sentence for the user."}},
+         "required": ["reason"]}},
+]
+
+FORMAT_RULES = """Rules:
+- Always reply by calling exactly one tool:
+  run_query, with one SELECT or WITH ... SELECT statement, and an assumption if the question
+  needed interpreting (for example "recent", "last three months", "today"); or
+  cannot_answer, if the data cannot answer the question or you will not write the query."""
+
 SYSTEM_PROMPT = f"""You translate business questions into one SQLite query.
 
 {SCHEMA}
 
-Rules:
-- Reply with ONLY the SQL query, nothing else. One statement. SELECT or WITH ... SELECT only.
+{FORMAT_RULES}
 - Use only the tables and columns above. Give result columns clear names.
 - Round money to 2 decimals and percentages to 1 decimal.
-- If the question cannot be answered from this data, reply exactly:
-  CANNOT_ANSWER: <one-sentence reason>
 
-Examples:
+Examples (SQL is what goes in run_query; CANNOT_ANSWER means call cannot_answer):
 """ + "\n\n".join(f"Question: {q}\n{a}" for q, a in EXAMPLES)
 
 _FORBIDDEN = re.compile(
@@ -100,6 +132,7 @@ class Answer:
     question: str
     sql: str = ""
     data: pd.DataFrame | None = None
+    assumption: str | None = None  # how the model read an ambiguous question, shown to the user
     refused: str | None = None   # the model's reason, when it says the data cannot answer
     error: str | None = None     # anything that went wrong; the user sees this, not a guess
 
@@ -109,6 +142,12 @@ def clean_sql(text: str) -> str:
     text = text.strip()
     fenced = re.search(r"```(?:sql)?\s*(.*?)```", text, re.DOTALL | re.IGNORECASE)
     return (fenced.group(1) if fenced else text).strip()
+
+
+def assumptions(sql: str) -> str | None:
+    """The '-- Assumption:' comment lines the model wrote, joined, or None."""
+    found = re.findall(r"^\s*--\s*assumption:\s*(.+)$", sql, re.IGNORECASE | re.MULTILINE)
+    return " ".join(a.strip() for a in found) or None
 
 
 def check_sql(sql: str) -> str:
@@ -150,14 +189,30 @@ def _default_client():
     return anthropic.Anthropic(api_key=key, timeout=30, max_retries=2)
 
 
+def _reply_from_tool(block) -> str:
+    """Turn a tool call into the same text form the rest of the code understands."""
+    data = block.input or {}
+    if block.name == "cannot_answer":
+        return f"CANNOT_ANSWER: {data.get('reason') or 'no reason given'}"
+    assumption = " ".join(str(data.get("assumption") or "").split())
+    sql = str(data.get("sql") or "")
+    return f"-- Assumption: {assumption}\n{sql}" if assumption else sql
+
+
 def generate_sql(question: str, client, model: str = MODEL, system: str = SYSTEM_PROMPT) -> str:
     response = client.messages.create(
         model=model,
         max_tokens=1000,
         thinking={"type": "disabled"},  # see Project 1: thinking can use the whole token budget
         system=system,
+        tools=TOOLS,
+        tool_choice={"type": "any"},    # must call a tool: no free-text replies
         messages=[{"role": "user", "content": f"Question: {question}"}],
     )
+    for block in response.content:
+        if getattr(block, "type", "") == "tool_use":
+            return _reply_from_tool(block)
+    # No tool call (only possible with fake clients in tests): fall back to the text.
     return "".join(b.text for b in response.content if getattr(b, "type", "") == "text")
 
 
@@ -178,6 +233,7 @@ def ask(question: str, client=None, db_path: Path = DB_PATH, model: str = MODEL,
         answer.refused = reply.split(":", 1)[1].strip() if ":" in reply else "no reason given"
         return answer
     answer.sql = reply
+    answer.assumption = assumptions(reply)
     try:
         answer.data = run_sql(reply, db_path)
     except UnsafeSQL as exc:
