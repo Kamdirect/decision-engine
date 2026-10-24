@@ -24,6 +24,7 @@ import numpy as np
 import pandas as pd
 
 SEED = 7
+NOISE = 0.06        # month-to-month randomness (lognormal sd): 0.06 is about 6%
 COMPANY = "Meridian Drinks Co. (fictional)"
 MONTHS = pd.period_range("2023-01", "2025-12", freq="M")
 DB_PATH = Path("data/sales.db")
@@ -119,19 +120,44 @@ def build_promotions(products: pd.DataFrame, rng: np.random.Generator) -> pd.Dat
     return pd.DataFrame(rows)
 
 
-def build_sales(products: pd.DataFrame, promotions: pd.DataFrame, rng: np.random.Generator) -> pd.DataFrame:
+def build_sales(
+    products: pd.DataFrame,
+    promotions: pd.DataFrame,
+    rng: np.random.Generator,
+    noise: float = NOISE,
+    growth_sd: float = 0.0,
+    season_sd: float = 0.0,
+    seed: int = SEED,
+    hetero: float = 0.0,
+) -> pd.DataFrame:
+    """growth_sd and season_sd make the data messier, for experiments: each year, each series'
+    growth rate and summer peak are randomly perturbed. At 0 (the default) every year has the
+    same growth and the same seasonal shape, which makes forecasting unrealistically easy.
+    hetero gives each SKU x region its own seasonal timing (peak shifted by up to a few months)
+    and strength; at 0 all series in a category share one seasonal shape."""
+    shocks = np.random.default_rng(seed + 1000)  # separate stream: defaults stay unchanged
     promo = {(r.month, r.region_id, r.product_id): r for r in promotions.itertuples()}
     rows = []
     for p in products.itertuples():
-        amplitude, _ = CATEGORIES[p.category]
+        base_amplitude, _ = CATEGORIES[p.category]
         launch = pd.Period(p.launch_month, "M")
         for r in REGIONS:
+            yearly_growth = p.annual_growth + shocks.normal(0, growth_sd, size=3) if growth_sd else None
+            yearly_season = base_amplitude * (1 + shocks.normal(0, season_sd, size=3)) if season_sd else None
+            phase = shocks.normal(0, 1.5 * hetero) if hetero else 0.0
+            strength = shocks.lognormal(0, 0.5 * hetero) if hetero else 1.0
+            level = 1.0
             for t, month in enumerate(MONTHS):
                 m = str(month)
+                year = t // 12
+                if yearly_growth is not None:
+                    level *= (1 + yearly_growth[year]) ** (1 / 12) if t else 1.0
                 if not on_sale(p, month):
                     continue
-                season = 1 + amplitude * np.sin((month.month - 4) / 12 * 2 * np.pi)
-                growth = (1 + p.annual_growth) ** (t / 12)
+                amplitude = yearly_season[year] if yearly_season is not None else base_amplitude
+                season = 1 + min(0.8, amplitude * strength) * np.sin(
+                    (month.month - 4 - phase) / 12 * 2 * np.pi)
+                growth = level if yearly_growth is not None else (1 + p.annual_growth) ** (t / 12)
                 ramp = min(1.0, 0.35 + 0.65 * (month - launch).n / 6) if launch > MONTHS[0] else 1.0
                 volume = p.base_cases * r["scale"] * season * growth * ramp
 
@@ -146,7 +172,7 @@ def build_sales(products: pd.DataFrame, promotions: pd.DataFrame, rng: np.random
                         and p.category == DISRUPTION["category"]):
                     volume *= DISRUPTION["factor"]
 
-                volume = max(0, int(round(volume * rng.lognormal(0, 0.06))))
+                volume = max(0, int(round(volume * rng.lognormal(0, noise))))
                 price = p.list_price_gbp * (1 - discount / 100) * rng.normal(1, 0.01)
                 rows.append(
                     {
@@ -194,12 +220,20 @@ CREATE TABLE sales (
 """
 
 
-def build_database(path: Path = DB_PATH, seed: int = SEED) -> dict:
+def generate_tables(seed: int = SEED, noise: float = NOISE, growth_sd: float = 0.0,
+                    season_sd: float = 0.0, hetero: float = 0.0) -> dict[str, pd.DataFrame]:
+    """All four tables as DataFrames (used directly by experiments, without a database)."""
     rng = np.random.default_rng(seed)
     products = build_products(rng)
     promotions = build_promotions(products, rng)
-    sales = build_sales(products, promotions, rng)
+    sales = build_sales(products, promotions, rng, noise, growth_sd, season_sd, seed, hetero)
     regions = pd.DataFrame(REGIONS)[["region_id", "region_name"]]
+    return {"regions": regions, "products": products, "promotions": promotions, "sales": sales}
+
+
+def build_database(path: Path = DB_PATH, seed: int = SEED) -> dict:
+    t = generate_tables(seed)
+    regions, products, promotions, sales = t["regions"], t["products"], t["promotions"], t["sales"]
 
     path.parent.mkdir(parents=True, exist_ok=True)
     path.unlink(missing_ok=True)
