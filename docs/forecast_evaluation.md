@@ -92,13 +92,16 @@ Over all of 2025, against the one fixed rule *last year × 12-month growth*:
 
 | Segment | Mean ML gain | Range across seeds | Seeds where ML was better |
 |---|---|---|---|
-| All | 3.8 | 2.5 to 4.9 | 10 of 10 |
-| Never-promoted products | 1.1 | 0.1 to 1.6 | 10 of 10 |
-| Promoted products, other months | 4.7 | 2.7 to 5.8 | 10 of 10 |
-| Promotion months | **16.8** | 13.9 to 20.2 | 10 of 10 |
+| All | 3.8 | 2.6 to 4.9 | 10 of 10 |
+| Never-promoted products | 1.1 | 0.1 to 1.7 | 10 of 10 |
+| Promoted products, other months | 4.7 | 2.8 to 5.7 | 10 of 10 |
+| Promotion months | **16.8** | 13.8 to 20.4 | 10 of 10 |
 
-Per series, across the 10 datasets: XGBoost beat *last year × 12-month growth* on **59%** of
-never-promoted series (median gain +0.5 pts) and on **94%** of promoted series (+6.9 pts).
+Per series, across the 10 datasets: XGBoost beat *last year × 12-month growth* on **60%** of
+never-promoted series (median gain +0.5 pts) and on **94%** of promoted series (+7.1 pts).
+
+*The saved files were produced on Windows. On Linux, XGBoost differs in the last decimal
+place (for example 13.9 to 20.2 instead of 13.8 to 20.4); no conclusion changes.*
 
 **The development result holds on unseen data.** What this check does **not** show: the 10
 datasets come from the same generator, with the same kinds of pattern. They test whether the

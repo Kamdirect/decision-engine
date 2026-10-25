@@ -2,7 +2,7 @@
 
 [![tests](https://github.com/Kamdirect/decision-engine/actions/workflows/tests.yml/badge.svg)](https://github.com/Kamdirect/decision-engine/actions/workflows/tests.yml)
 
-**Live app:** _link added after deployment_
+**[Live app](https://decision-engine-kamal.streamlit.app)**
 
 Forecasting and self-serve analytics for an FMCG drinks business, built to show **where each
 tool can be trusted and where it cannot**.
@@ -19,7 +19,7 @@ tool can be trusted and where it cannot**.
   product-region series. On never-promoted products it is close to a coin flip: better on
   57% of series, by a median of 0.4 points. The gain comes from information the rules
   ignore (the planned promotion calendar). It held on **10 of 10 datasets never used in
-  development** (promotion-month gain 13.9–20.2 points).
+  development** (promotion-month gain 13.8–20.4 points).
 - **Self-serve analytics that can be trusted:** a plain-English-to-SQL assistant answers
   **97.8%** of 45 hand-checked questions correctly, and handled **all 45** hostile attempts
   safely without changing the database. The most valuable line in its instructions says
@@ -134,7 +134,7 @@ never-promoted series (median +0.4 pts). By month, it doesn't beat the best rule
 January, February, July or August.
 
 **Independent check on 10 unseen datasets** (`scripts/independent_check.py`): the ML gain is
-**13.9 to 20.2 points** in promotion months and **0.1 to 1.6** on never-promoted products.
+**13.8 to 20.4 points** in promotion months and **0.1 to 1.7** on never-promoted products.
 ML was better in every dataset, but on never-promoted products by too little to matter. The
 datasets come from the same generator, so this rules out a lucky draw, not a gap with real data.
 
