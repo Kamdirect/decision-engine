@@ -1,0 +1,5 @@
+segment,mean_gain_pts,min_gain_pts,max_gain_pts,seeds_ml_better,xgboost_wmape,best_rule_wmape
+ALL,3.8,2.6,4.9,10 of 10,9.7,13.5
+never-promoted SKUs,1.1,0.1,1.7,10 of 10,9.4,10.4
+"promoted SKUs, normal months",4.7,2.8,5.7,10 of 10,9.7,14.4
+promotion months,16.8,13.8,20.4,10 of 10,12.5,29.3

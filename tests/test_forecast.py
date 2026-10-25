@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.forecast import load_panel, score, walk_forward, wmape
+from src.forecast import METHODS, load_panel, mae, score, series_wins, walk_forward, wmape
 
 
 @pytest.fixture(scope="module")
@@ -30,8 +30,8 @@ def test_seasonal_naive_is_last_years_value(panel, results):
 
 
 def test_all_methods_scored_on_the_same_rows(results):
-    assert results[["naive", "growth_3m", "growth_12m", "xgboost"]].notna().all().all()
-    assert (results[["naive", "growth_3m", "growth_12m", "xgboost"]] > 0).all().all()
+    assert results[METHODS].notna().all().all()
+    assert (results[METHODS] > 0).all().all()
 
 
 def test_no_leakage_from_the_future(panel):
@@ -46,7 +46,8 @@ def test_no_leakage_from_the_future(panel):
 
 def test_score_credits_ml_only_against_the_best_simple_rule(results):
     s = score(results).iloc[0]
-    best_simple = min(s["naive_wmape"], s["growth_3m_wmape"], s["growth_12m_wmape"])
+    best_simple = min(s["last_month_wmape"], s["naive_wmape"], s["growth_3m_wmape"],
+                      s["growth_12m_wmape"])
     assert s["ml_gain_pts"] == pytest.approx(round(best_simple - s["xgboost_wmape"], 1), abs=0.11)
 
 
@@ -54,3 +55,27 @@ def test_results_are_reproducible(panel):
     a = walk_forward(panel, ["2025-06"])
     b = walk_forward(panel, ["2025-06"])
     np.testing.assert_allclose(a["xgboost"], b["xgboost"])
+
+
+def test_mae_on_a_hand_worked_example():
+    # errors 10 and 30 -> mean 20 cases
+    assert mae(pd.Series([100, 100]), pd.Series([90, 130])) == pytest.approx(20.0)
+
+
+def test_last_month_naive_is_last_months_value(panel, results):
+    row = results.iloc[0]
+    prev = pd.Period(row.month, "M") - 1
+    last = panel[(panel["product_id"] == row.product_id) & (panel["region_id"] == row.region_id)
+                 & (panel["period"] == prev)]
+    assert row.last_month == last["volume_cases"].iloc[0]
+
+
+def test_mae_score_reports_gain_in_cases(results):
+    s = score(results, metric="mae").iloc[0]
+    assert "ml_gain_cases" in s and "xgboost_mae" in s
+
+
+def test_series_wins_has_one_row_per_series(results):
+    w = series_wins(results)
+    assert len(w) == results.groupby(["product_id", "region_id"]).ngroups
+    assert (w["ml_wins"] == (w["xgboost_wmape"] < w["rule_wmape"])).all()
