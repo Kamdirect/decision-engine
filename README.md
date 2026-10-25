@@ -4,6 +4,10 @@
 
 **[Live app](https://decision-engine-kamal.streamlit.app)**
 
+![Dashboard, Forecast and Business case tabs](docs/demo.gif)
+
+**One-page decision memo:** [docs/decision_memo.md](docs/decision_memo.md)
+
 Forecasting and self-serve analytics for an FMCG drinks business, built to show **where each
 tool can be trusted and where it cannot**.
 
@@ -23,7 +27,7 @@ tool can be trusted and where it cannot**.
 - **Is it worth paying for?** Valuing each forecast error at list price, under stated cost
   assumptions sampled 10,000 times: a model for **promoted products** saves about **£47k a
   year** (£31k–68k). Over 3 years, after build and running costs, its median net value is
-  **£42k**, with a **15% chance of losing money**. For never-promoted products alone it never
+  **£44k**, with a **14% chance of losing money**. For never-promoted products alone it never
   pays back. The assumption that matters most is how much of a stockout is lost to
   competitors, so **measure that before investing**.
 - **Self-serve analytics that can be trusted:** a plain-English-to-SQL assistant answers
@@ -65,6 +69,27 @@ a confident, wrong number. This project builds all four and measures where each 
 | **Forecast** | Forecasts each month of 2025 with 4 simple rules and XGBoost, and scores them by promotion status, category, region and month | Is machine learning worth it, and *where*? |
 | **Business case** | Values forecast errors in £ under adjustable cost assumptions, and simulates the full range of assumptions | Does the model pay for itself, for which products, and what is the chance it doesn't? |
 | **Ask the data** | Turns a plain-English question into SQL and runs it on a read-only database, showing the SQL and any assumption with every answer | How often is it right, and what stops it doing harm? |
+
+## Architecture
+
+```mermaid
+flowchart LR
+    G["synthetic_data.py<br/>fixed seed"] --> DB[("sales.db<br/>SQLite, 4 tables")]
+    DB --> F["forecast.py<br/>4 rules + XGBoost<br/>walk-forward"]
+    F --> BC["business_case.py<br/>error costs +<br/>Monte Carlo"]
+    U(["User question"]) --> LLM["Claude Haiku<br/>schema + notes + examples<br/>answers via tool call"]
+    LLM -->|"sql + assumption<br/>or cannot_answer"| GR{"Guardrails<br/>one SELECT, no write keywords,<br/>1,000-row cap, 5 s limit"}
+    GR -->|"read-only connection"| DB
+    DB --> APP["Streamlit app<br/>Dashboard · Forecast ·<br/>Business case · Ask the data"]
+    F --> APP
+    BC --> APP
+    GR -->|"result + SQL + assumption"| APP
+    E["Evaluations<br/>45 questions · 15 hostile requests<br/>10 unseen datasets"] -.-> F
+    E -.-> LLM
+```
+
+The language model never reads the data. It only writes SQL, which our code checks and runs.
+Every number in the app comes from the database or from deterministic code.
 
 ## Methodology
 
@@ -192,15 +217,15 @@ scored 100%. The full record of all 4 evaluation runs is in
 |---|---|---|---|---|
 | Yearly saving: promoted products | £31k | £47k | £68k | 0% |
 | Yearly saving: never-promoted products | £5k | £7k | £9k | 0% |
-| 3-year net value, built for promoted products only | −£20k | **£42k** | £111k | **15%** |
-| 3-year net value, built for never-promoted products only | −£115k | −£79k | −£44k | 100% |
+| 3-year net value, built for promoted products only | −£19k | **£44k** | £113k | **14%** |
+| 3-year net value, built for never-promoted products only | −£115k | −£80k | −£44k | 100% |
 
 - **A missed sale costs about 4 times more than a month of extra stock**, so reducing
   under-forecasts in promotion months is where the value comes from.
 - **The biggest driver is the share of a shortfall lost to competitors** (correlation +0.72
   with the 3-year value), ahead of running cost (−0.43) and gross margin (+0.41).
 - **Scale decides it.** Savings grow with volume; costs don't. Break-even for promoted products
-  is about **£11.5m of annual sales** (90% range £6.7m–£19.6m). This business sells £16.4m.
+  is about **£11.3m of annual sales** (90% range £6.7m–£19.4m). This business sells £16.4m.
 
 ## What went wrong, and what changed
 
@@ -221,7 +246,7 @@ scored 100%. The full record of all 4 evaluation runs is in
 ## Business implications
 
 - **Build the model for promoted products, keep the simple rule for the rest.** The 3-year
-  case is positive for promoted products (median £42k) and negative for never-promoted
+  case is positive for promoted products (median £44k) and negative for never-promoted
   products alone. Measure how much demand is lost in stockouts before committing, because
   that assumption moves the answer most.
 - **Forecasting: invest in ML where there is information the simple rules ignore.** Here,
@@ -307,5 +332,5 @@ src/guardrail_set.py      The 15 hostile requests
 src/guardrails_eval.py    Records which safety layer stopped each request
 scripts/                  Runnable experiments and evaluations
 tests/                    79 tests, including leakage, guardrail and app tests
-docs/                     Data dictionary, evaluation log, every run's raw results
+docs/                     Decision memo, business case, forecast and assistant evaluations, raw results
 ```

@@ -1,12 +1,15 @@
 # Business case: is ML promotion forecasting worth building?
 
 **Recommendation:** build it for **promoted products only**. Over 3 years it is likely to pay
-for itself: median net value about **£42k**, with roughly a **1 in 7 chance of losing money**.
+for itself: median net value about **£44k**, with roughly a **1 in 7 chance of losing money**.
 Never-promoted products alone would never pay for the build (about £7k a year saved, against
 about £100k of cost over 3 years). **Before committing, measure one number on real data:** the
 share of a stock shortfall that is lost to competitors. It moves the result more than every
 other assumption.
 
+> Figures are from the saved run (Windows). The live app runs on Linux, where XGBoost
+> differs slightly, so its numbers can differ by about £1–2k; no conclusion changes.
+>
 > Everything here is synthetic and assumption-driven. These are **scenario estimates, not
 > measured savings.** Reproduce with `python -m scripts.business_case`; results are saved in
 > [business_case.csv](business_case.csv).
@@ -51,9 +54,9 @@ Each assumption is sampled uniformly between its low and high values, 10,000 tim
 |---|---|---|---|---|
 | Yearly saving: promoted products | £31k | £47k | £68k | 0% |
 | Yearly saving: never-promoted products | £5k | £7k | £9k | 0% |
-| 3-year net: built for promoted products only | −£20k | **£42k** | £111k | **15%** |
-| 3-year net: built for never-promoted products only | −£115k | −£79k | −£44k | 100% |
-| 3-year net: built for all products | −£5k | £62k | £138k | 7% |
+| 3-year net: built for promoted products only | −£19k | **£44k** | £113k | **14%** |
+| 3-year net: built for never-promoted products only | −£115k | −£80k | −£44k | 100% |
+| 3-year net: built for all products | −£4k | £64k | £140k | 6% |
 
 **What drives the result** (correlation with the 3-year value for promoted products):
 
@@ -62,13 +65,17 @@ Each assumption is sampled uniformly between its low and high values, 10,000 tim
 | Share of a shortfall lost | +0.72 |
 | Running cost | −0.43 |
 | Gross margin | +0.41 |
-| Build cost | −0.30 |
-| Write-off share | +0.18 |
+| Build cost | −0.29 |
+| Write-off share | +0.19 |
 | Holding rate | +0.02 |
+
+**The break-even point for the key assumption:** with every other assumption at its midpoint,
+the 3-year case for promoted products breaks even when about **a third** of a shortfall is
+lost to competitors. At 30% it is −£7k; at 50%, +£43k.
 
 **Scale matters.** Savings grow with volume, but build and running costs mostly don't. This
 business sells about £16.4m a year at list price. For promoted products, the break-even size
-is about **£11.5m a year** (90% range £6.7m to £19.6m). A business much smaller than that
+is about **£11.3m a year** (90% range £6.7m to £19.4m). A business much smaller than that
 should keep the simple rule.
 
 ## 5. What this means
