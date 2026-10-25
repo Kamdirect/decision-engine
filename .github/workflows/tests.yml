@@ -1,0 +1,20 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - run: pip install -r requirements.txt
+      # No API key here on purpose: every test uses a fake model, so CI is free and never
+      # depends on the network. The live evaluations are run by hand (scripts/evaluate_*.py).
+      - run: python -m pytest
