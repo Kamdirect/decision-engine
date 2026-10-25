@@ -48,7 +48,8 @@ def main() -> None:
                 rows.append(df.assign(scenario=name, seed=seed))
     out = pd.concat(rows)
     summary = (out.groupby(["scenario", "segment"], sort=False)
-               [["naive_wmape", "growth_3m_wmape", "growth_12m_wmape", "xgboost_wmape", "ml_gain_pts"]]
+               [["last_month_wmape", "naive_wmape", "growth_3m_wmape", "growth_12m_wmape", "xgboost_wmape",
+                "ml_gain_pts"]]
                .mean().round(1))
     pd.set_option("display.width", 140)
     print("Mean WMAPE (%) over seeds", SEEDS, "- walk-forward, 12 one-month-ahead forecasts")

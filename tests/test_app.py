@@ -49,8 +49,20 @@ def test_all_three_tabs_render_without_errors():
 def test_forecast_table_has_every_method_and_segment():
     at = run_app()
     table = at.dataframe[1].value  # [0] is the regions table
-    assert {"XGBoost", "Same month last year", "ML gain vs best rule (pts)"} <= set(table.columns)
+    assert {"XGBoost", "Last month", "Same month last year", "Best rule",
+            "ML gain vs best rule (pts)"} <= set(table.columns)
     assert len(table) == 4  # all forecasts + 3 segments
+    per_series = at.dataframe[2].value
+    assert set(per_series.index) == {"Promoted products", "Never-promoted products"}
+
+
+def test_forecast_switches_to_mae_and_by_month():
+    at = run_app()
+    at.radio[1].set_value("MAE (cases)").run()
+    at.selectbox[0].set_value("Month").run()
+    assert not at.exception
+    table = at.dataframe[1].value
+    assert "ML gain vs best rule (cases)" in table.columns and len(table) == 13
 
 
 def test_dashboard_year_switch():

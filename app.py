@@ -15,7 +15,7 @@ import streamlit as st
 from dotenv import load_dotenv
 
 from src import assistant
-from src.forecast import load_panel, score, walk_forward
+from src.forecast import load_panel, score, series_wins, walk_forward
 from src.synthetic_data import COMPANY
 
 ROOT = Path(__file__).parent
@@ -23,7 +23,8 @@ DB = ROOT / "data" / "sales.db"
 DOCS = ROOT / "docs"
 MAX_QUESTIONS_PER_SESSION = 10
 TEST_MONTHS = [f"2025-{m:02d}" for m in range(1, 13)]
-METHOD_NAMES = {"naive": "Same month last year", "growth_3m": "Last year x 3-month growth",
+METHOD_NAMES = {"last_month": "Last month", "naive": "Same month last year",
+                "growth_3m": "Last year x 3-month growth",
                 "growth_12m": "Last year x 12-month growth", "xgboost": "XGBoost"}
 SEGMENT_NAMES = {"promotion months": "Promotion months",
                  "promoted SKUs, normal months": "Promoted SKUs, other months",
@@ -161,24 +162,56 @@ with tab_dash:
 with tab_forecast:
     st.markdown(
         "Each month of 2025 is forecast using **only the months before it** (walk-forward), "
-        "with three simple rules and one machine-learning model. Error is WMAPE: total "
-        "absolute error as a % of actual volume. **Lower is better.**")
+        "with four simple rules and one machine-learning model. **Lower error is better.** "
+        "XGBoost only gets credit for beating the **best** rule in each row.")
     with st.spinner("Running the walk-forward forecasts (about 3 seconds)..."):
         results = forecast_results()
 
-    table = pd.concat([score(results).assign(segment="All forecasts"),
-                       score(results, "segment").replace({"segment": SEGMENT_NAMES})])
-    shown = table.rename(columns={f"{m}_wmape": METHOD_NAMES[m] for m in METHOD_NAMES} |
-                         {"ml_gain_pts": "ML gain vs best rule (pts)", "rows": "forecasts"})
-    error_cols = [METHOD_NAMES[m] for m in METHOD_NAMES] + ["ML gain vs best rule (pts)"]
-    st.dataframe(shown.set_index("segment").style.format("{:.1f}", subset=error_cols),
+    c1, c2 = st.columns(2)
+    metric = c1.radio("Error measure", ["WMAPE (%)", "MAE (cases)"], horizontal=True,
+                      help="WMAPE: total absolute error as a % of actual volume. "
+                           "MAE: average absolute error in cases per product, region and month.")
+    breakdown = c2.selectbox("Break down by", ["Promotion status", "Category", "Region", "Month"])
+    key = "wmape" if metric.startswith("WMAPE") else "mae"
+    gain = "ml_gain_pts" if key == "wmape" else "ml_gain_cases"
+    by = {"Promotion status": "segment", "Category": "category", "Region": "region",
+          "Month": "month"}[breakdown]
+    table = pd.concat([score(results, metric=key).assign(segment="All forecasts"),
+                       score(results, by, metric=key)])
+    if by == "segment":
+        table = table.replace({"segment": SEGMENT_NAMES})
+    gain_label = "ML gain vs best rule " + ("(pts)" if key == "wmape" else "(cases)")
+    table["best_rule"] = table["best_rule"].map(METHOD_NAMES)
+    shown = table.rename(columns={f"{m}_{key}": METHOD_NAMES[m] for m in METHOD_NAMES} |
+                         {gain: gain_label, "rows": "forecasts", "best_rule": "Best rule"})
+    error_cols = [METHOD_NAMES[m] for m in METHOD_NAMES] + [gain_label]
+    order = ["XGBoost", gain_label, "Best rule"] + [METHOD_NAMES[m] for m in METHOD_NAMES
+                                                    if m != "xgboost"] + ["forecasts"]
+    st.dataframe(shown.set_index("segment")[order].style.format("{:.1f}", subset=error_cols),
                  width="stretch")
+    st.caption("The best rule is picked per row after seeing the results, which favours the "
+               "rules: the ML gains shown are, if anything, understated.")
+
+    wins = series_wins(results)
+    promoted = set(results.loc[results["segment"] != "never-promoted SKUs", "product_id"])
+    wins["group"] = wins["product_id"].isin(promoted).map(
+        {True: "Promoted products", False: "Never-promoted products"})
+    per_series = wins.groupby("group").agg(
+        series=("ml_wins", "size"), ml_wins=("ml_wins", "mean"), median_gain=("gain_pts", "median"))
+    st.markdown("**Does XGBoost win on each product in each region, or only on average?** "
+                "Compared with *last year x 12-month growth* over the whole of 2025:")
+    st.dataframe(per_series.rename(columns={
+        "series": "product-region series", "ml_wins": "XGBoost better on",
+        "median_gain": "median gain (pts)"}).style.format(
+        {"XGBoost better on": "{:.0%}", "median gain (pts)": "{:+.1f}"}), width="stretch")
+
     st.info(
         "**Decision rule:** use the model where it has information the rules cannot use. Here "
-        "that is the promotion calendar, so the gain is largest in promotion months. Elsewhere, "
-        "require evidence on your own data first. On real distributor data in my MSc "
-        "dissertation, ML did **not** beat the simple rules: synthetic results like these "
-        "cannot prove real-world value.")
+        "that is the promotion calendar: XGBoost wins on almost every promoted product. On "
+        "never-promoted products it is close to a coin flip, so the simple rule is the better "
+        "choice there: free, transparent and nearly as accurate. On real distributor data in "
+        "my MSc dissertation, ML was statistically indistinguishable from the seasonal-naive "
+        "rule. Synthetic results like these cannot prove real-world value.")
 
     st.subheader("One product in one region")
     c1, c2 = st.columns(2)
