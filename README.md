@@ -20,6 +20,12 @@ tool can be trusted and where it cannot**.
   57% of series, by a median of 0.4 points. The gain comes from information the rules
   ignore (the planned promotion calendar). It held on **10 of 10 datasets never used in
   development** (promotion-month gain 13.8–20.4 points).
+- **Is it worth paying for?** Valuing each forecast error at list price, under stated cost
+  assumptions sampled 10,000 times: a model for **promoted products** saves about **£47k a
+  year** (£31k–68k). Over 3 years, after build and running costs, its median net value is
+  **£42k**, with a **15% chance of losing money**. For never-promoted products alone it never
+  pays back. The assumption that matters most is how much of a stockout is lost to
+  competitors, so **measure that before investing**.
 - **Self-serve analytics that can be trusted:** a plain-English-to-SQL assistant answers
   **97.8%** of 45 hand-checked questions correctly, and handled **all 45** hostile attempts
   safely without changing the database. The most valuable line in its instructions says
@@ -34,17 +40,18 @@ A commercial team at a drinks company works from three questions:
 
 1. **What happened?** Which products, categories and regions are growing, and is that growth real?
 2. **What will happen?** How much will each product sell next month, by region?
-3. **What about my own question?** Answers to ad-hoc questions without waiting days for an analyst.
+3. **Is a better forecast worth paying for?** And for which products?
+4. **What about my own question?** Answers to ad-hoc questions without waiting days for an analyst.
 
 Two common answers carry real risk. **Machine-learning forecasts** are often bought before
 anyone checks whether they beat a simple rule. **AI assistants that query data** can return
-a confident, wrong number. This project builds all three capabilities and measures where
-each one earns trust.
+a confident, wrong number. This project builds all four and measures where each one earns trust.
 
 ## Objectives
 
 - Compare a machine-learning forecast with the **best** of four simple rules, on unseen months.
 - Find **where** machine learning adds value, rather than reporting one average.
+- Turn forecast accuracy into a **business decision**, with the cost assumptions stated as ranges.
 - Build a plain-English-to-SQL assistant whose numbers always come from the database.
 - Measure the assistant's accuracy and safety with a test written in advance, rather than
   judging it on a few demonstrations.
@@ -56,6 +63,7 @@ each one earns trust.
 |---|---|---|
 | **Dashboard** | Revenue, volume and growth by year, category and region | Is the headline growth real, or partly a base effect? |
 | **Forecast** | Forecasts each month of 2025 with 4 simple rules and XGBoost, and scores them by promotion status, category, region and month | Is machine learning worth it, and *where*? |
+| **Business case** | Values forecast errors in £ under adjustable cost assumptions, and simulates the full range of assumptions | Does the model pay for itself, for which products, and what is the chance it doesn't? |
 | **Ask the data** | Turns a plain-English question into SQL and runs it on a read-only database, showing the SQL and any assumption with every answer | How often is it right, and what stops it doing harm? |
 
 ## Methodology
@@ -112,6 +120,17 @@ the truth:
 - **Guardrail test:** 15 hostile requests, each 3 times. It records which layer stopped each
   one and checks that the database file is unchanged byte for byte.
 
+### Business case
+- Each 2025 forecast error is valued at list price. Stock is ordered to the forecast. An
+  **over-forecast** costs a month of holding plus a small write-off. An **under-forecast** loses
+  part of the shortfall to competitors, costing its gross margin.
+- Six assumptions (gross margin, share of a shortfall lost, holding rate, write-off share,
+  build cost, running cost) are each given a low–high range with a reason. They are sampled
+  together 10,000 times, so the result is a range and a chance of loss, not one number.
+- The method compares XGBoost with the best simple rule (*last year × 12-month growth*) for
+  promoted products, never-promoted products and all products. Full assumptions and
+  reasoning: [docs/business_case.md](docs/business_case.md).
+
 ## Results
 
 ### 1. Forecasting: ML wins where it has information the simple rules don't
@@ -160,7 +179,28 @@ and the database file was unchanged byte for byte. The requests included deletin
 requests to inflate or hide numbers. The model refused 39. The 5-second limit stopped 3
 runaway queries. The other 3 were "show every row", which is allowed and is capped at 1,000 rows.
 
-The full record of all 4 evaluation runs is in [docs/evaluation_log.md](docs/evaluation_log.md).
+Correctness, query safety and database integrity are reported **separately** in
+[docs/evaluation_by_category.md](docs/evaluation_by_category.md), by question type. A query can
+be perfectly safe and still return the wrong answer. Of the 3 wrong answers (out of 135 attempts),
+1 was a time-based question and 2 were business definitions; the other three categories
+scored 100%. The full record of all 4 evaluation runs is in
+[docs/evaluation_log.md](docs/evaluation_log.md).
+
+### 3. Business case: build it for promoted products only
+
+| | Low (5th pct) | Median | High (95th pct) | Chance of losing money |
+|---|---|---|---|---|
+| Yearly saving: promoted products | £31k | £47k | £68k | 0% |
+| Yearly saving: never-promoted products | £5k | £7k | £9k | 0% |
+| 3-year net value, built for promoted products only | −£20k | **£42k** | £111k | **15%** |
+| 3-year net value, built for never-promoted products only | −£115k | −£79k | −£44k | 100% |
+
+- **A missed sale costs about 4 times more than a month of extra stock**, so reducing
+  under-forecasts in promotion months is where the value comes from.
+- **The biggest driver is the share of a shortfall lost to competitors** (correlation +0.72
+  with the 3-year value), ahead of running cost (−0.43) and gross margin (+0.41).
+- **Scale decides it.** Savings grow with volume; costs don't. Break-even for promoted products
+  is about **£11.5m of annual sales** (90% range £6.7m–£19.6m). This business sells £16.4m.
 
 ## What went wrong, and what changed
 
@@ -180,6 +220,10 @@ The full record of all 4 evaluation runs is in [docs/evaluation_log.md](docs/eva
 
 ## Business implications
 
+- **Build the model for promoted products, keep the simple rule for the rest.** The 3-year
+  case is positive for promoted products (median £42k) and negative for never-promoted
+  products alone. Measure how much demand is lost in stockouts before committing, because
+  that assumption moves the answer most.
 - **Forecasting: invest in ML where there is information the simple rules ignore.** Here,
   that is the promotion calendar. For steady, never-promoted products, a simple growth-adjusted
   rule gets most of the accuracy, at no cost and with full transparency. **On real
@@ -197,6 +241,10 @@ The full record of all 4 evaluation runs is in [docs/evaluation_log.md](docs/eva
 
 ## Limitations
 
+- **The business case is a scenario, not a measured saving.** It uses one year of synthetic
+  forecasts, ignores safety stock and lead times, and applies one cost per case to every
+  product. Safety stock would turn some lost sales into holding cost and lower the value of
+  better forecasts.
 - **Synthetic data with planted patterns.** The methods detect patterns that were put there.
   That doesn't prove the patterns exist in real markets, and the real-data dissertation
   found no reliable ML advantage.
@@ -219,7 +267,7 @@ The full record of all 4 evaluation runs is in [docs/evaluation_log.md](docs/eva
 | Data and modelling | pandas, NumPy, XGBoost, SQLite |
 | Language model | Anthropic Claude API (`claude-haiku-5-5`, tool calls) |
 | App | Streamlit, Altair |
-| Testing and CI | pytest (69 tests), Streamlit AppTest, GitHub Actions |
+| Testing and CI | pytest (79 tests), Streamlit AppTest, GitHub Actions |
 
 ## Run it yourself
 
@@ -227,7 +275,7 @@ The full record of all 4 evaluation runs is in [docs/evaluation_log.md](docs/eva
 python -m venv .venv
 .venv\Scripts\activate          # Windows  (macOS/Linux: source .venv/bin/activate)
 pip install -r requirements.txt
-python -m pytest                # 69 tests, no API key needed: a fake model is used
+python -m pytest                # 79 tests, no API key needed: a fake model is used
 python -m streamlit run app.py
 ```
 
@@ -240,21 +288,24 @@ unavailable.
 | The database | `python -m src.synthetic_data` | free |
 | The ML stress test | `python -m scripts.when_does_ml_win` | free, about 1 minute |
 | The independent forecast check | `python -m scripts.independent_check` | free, about 30 seconds |
+| The business case | `python -m scripts.business_case` | free, about 10 seconds |
+| The evaluation summary by category | `python -m scripts.evaluation_summary` | free, uses saved results |
 | The 45-question evaluation | `python -m scripts.evaluate_assistant` | API, under £1 |
 | The guardrail test | `python -m scripts.evaluate_guardrails` | API, a few pence |
 
 ## Project structure
 
 ```
-app.py                    Streamlit app (3 tabs)
+app.py                    Streamlit app (4 tabs)
 src/synthetic_data.py     Builds data/sales.db from a fixed seed
-src/forecast.py           Baselines, XGBoost, walk-forward validation, WMAPE
+src/forecast.py           Baselines, XGBoost, walk-forward validation, WMAPE and MAE
+src/business_case.py      Error costs, stated assumptions, Monte Carlo simulation
 src/assistant.py          Text-to-SQL: prompt, tools, guardrails, read-only execution
 src/eval_set.py           The 45 questions and their correct SQL
 src/grading.py            Marks answers by comparing results, not SQL text
 src/guardrail_set.py      The 15 hostile requests
 src/guardrails_eval.py    Records which safety layer stopped each request
 scripts/                  Runnable experiments and evaluations
-tests/                    69 tests, including leakage, guardrail and app tests
+tests/                    79 tests, including leakage, guardrail and app tests
 docs/                     Data dictionary, evaluation log, every run's raw results
 ```

@@ -15,6 +15,7 @@ import streamlit as st
 from dotenv import load_dotenv
 
 from src import assistant
+from src.business_case import ASSUMPTIONS, annual_cost, drivers, error_value, simulate, summarise
 from src.forecast import load_panel, score, series_wins, walk_forward
 from src.synthetic_data import COMPANY
 
@@ -80,6 +81,22 @@ def evaluation_summary() -> dict | None:
         return None
 
 
+@st.cache_data(show_spinner=False)
+def prices() -> pd.Series:
+    with closing(sqlite3.connect(f"file:{DB}?mode=ro", uri=True)) as con:
+        return pd.read_sql("SELECT product_id, list_price_gbp FROM products", con) \
+            .set_index("product_id")["list_price_gbp"]
+
+
+@st.cache_data(show_spinner=False)
+def business_simulation() -> pd.DataFrame:
+    results = forecast_results()
+    promoted = results["segment"] != "never-promoted SKUs"
+    promoted = results["product_id"].isin(set(results.loc[promoted, "product_id"]))
+    return simulate(results, prices(), {"promoted": promoted, "never_promoted": ~promoted,
+                                        "all": promoted | ~promoted})
+
+
 class _AskFailed(Exception):
     """Raised inside the cached function so that failures are never cached."""
 
@@ -107,6 +124,11 @@ def line_chart(wide: pd.DataFrame, y_title: str) -> None:
     st.altair_chart(chart, width="stretch")
 
 
+def money(x: float) -> str:
+    """£1,234 or -£1,234 (not £-1,234)."""
+    return f"-£{-x:,.0f}" if x < 0 else f"£{x:,.0f}"
+
+
 def gbp(x: float) -> str:
     return f"£{x / 1e6:,.2f}m" if abs(x) >= 1e6 else f"£{x:,.0f}"
 
@@ -117,7 +139,8 @@ st.title("📈 Commercial Decision Engine")
 st.caption(f"{COMPANY}: 30 drinks products, 3 regions, monthly sales 2023 to 2025. "
            "All data is synthetic, generated from a fixed seed. No real company data is used.")
 
-tab_dash, tab_forecast, tab_ask = st.tabs(["Dashboard", "Forecast", "Ask the data"])
+tab_dash, tab_forecast, tab_case, tab_ask = st.tabs(
+    ["Dashboard", "Forecast", "Business case", "Ask the data"])
 
 # ------------------------------------------------------------------ 1. dashboard
 with tab_dash:
@@ -231,7 +254,79 @@ with tab_forecast:
     st.caption("Recomputed live from the database each time the app starts. "
                "Stress tests on messier data: docs/when_does_ml_win.csv.")
 
-# ------------------------------------------------------------------ 3. ask the data
+# ------------------------------------------------------------------ 3. business case
+with tab_case:
+    st.markdown(
+        "**The decision:** should the company build and run an ML forecast, and for which "
+        "products? Each 2025 forecast error is valued at list price. Stock is ordered to the "
+        "forecast. A forecast that is **too high** leaves extra stock for a month, costing "
+        "holding cost plus a small write-off. A forecast that is **too low** loses part of the "
+        "shortfall to competitors, costing its gross margin. "
+        "**Every input below is an assumption, not a measured cost.**")
+    results = forecast_results()
+    promoted_ids = set(results.loc[results["segment"] != "never-promoted SKUs", "product_id"])
+    is_promoted = results["product_id"].isin(promoted_ids)
+
+    st.subheader("Try your own assumptions")
+    keys = ["gross_margin", "lost_share", "holding_rate", "write_off"]
+    labels = {"gross_margin": "Gross margin", "lost_share": "Share of a shortfall lost to competitors",
+              "holding_rate": "Holding cost per year", "write_off": "Excess stock written off"}
+    a = {}
+    cols = st.columns(2)
+    for i, k in enumerate(keys):
+        spec = ASSUMPTIONS[k]
+        a[k] = cols[i % 2].slider(labels[k], spec.low, spec.high, (spec.low + spec.high) / 2,
+                                  step=0.01, format="%.2f", help=spec.why)
+    c1, c2 = st.columns(2)
+    build = c1.number_input("Build cost, one-off (GBP)", 0, 200_000, 40_000, step=5_000,
+                            help=ASSUMPTIONS["build_cost"].why)
+    run = c2.number_input("Running cost per year (GBP)", 0, 100_000, 20_000, step=5_000,
+                          help=ASSUMPTIONS["run_cost"].why)
+
+    rows = []
+    for name, mask in [("Promoted products", is_promoted), ("Never-promoted products", ~is_promoted)]:
+        rule_cost = annual_cost(error_value(results[mask], prices(), "growth_12m"), a)
+        ml_cost = annual_cost(error_value(results[mask], prices(), "xgboost"), a)
+        saving = rule_cost - ml_cost
+        rows.append({"products": name, "error cost, simple rule": rule_cost,
+                     "error cost, XGBoost": ml_cost, "saving per year": saving,
+                     "3-year net if built for this group alone": 3 * saving - build - 3 * run})
+    point = pd.DataFrame(rows).set_index("products")
+    st.dataframe(point.style.format(money), width="stretch")
+    st.caption("Simple rule = last year x 12-month growth, the best simple rule in the Forecast tab.")
+
+    st.subheader("Across the full range of assumptions")
+    with st.spinner("Sampling the assumptions 10,000 times..."):
+        sim = business_simulation()
+    table = summarise(sim).rename(index={
+        "saving_promoted": "Yearly saving: promoted products",
+        "saving_never_promoted": "Yearly saving: never-promoted products",
+        "saving_all": "Yearly saving: all products",
+        "net_3y_promoted": "3-year net: built for promoted products only",
+        "net_3y_never_promoted": "3-year net: built for never-promoted products only",
+        "net_3y_all": "3-year net: built for all products"})
+    st.dataframe(table.rename(columns={"p5": "low (5th pct)", "median": "median",
+                                       "p95": "high (95th pct)",
+                                       "chance_below_zero": "chance of losing money"})
+                 .style.format({"low (5th pct)": money, "median": money,
+                                "high (95th pct)": money, "chance of losing money": "{:.0%}"}),
+                 width="stretch")
+    top = drivers(sim, "net_3y_promoted")
+    st.info(
+        "**Recommendation:** build the model for **promoted products**, where it is likely to pay "
+        "for itself within 3 years. Don't build it for never-promoted products: the saving there "
+        "never covers the cost. Once the model exists, adding never-promoted products costs little "
+        "and saves a little, so it is optional. **The assumption that matters most** is "
+        f"*{labels.get(top.index[0], top.index[0]).lower()}* (correlation {top.iloc[0]:+.2f} with "
+        "the 3-year value). Measure it on real data before deciding.")
+    with st.expander("Every assumption, and why"):
+        st.dataframe(pd.DataFrame([{"assumption": k, "low": v.low, "high": v.high, "unit": v.unit,
+                                    "why": v.why} for k, v in ASSUMPTIONS.items()]),
+                     hide_index=True, width="stretch")
+    st.caption("Limits: one year of synthetic data; no safety stock or lead times; one cost per "
+               "case for every product. A model for a real decision would add all three.")
+
+# ------------------------------------------------------------------ 4. ask the data
 with tab_ask:
     st.markdown(
         "Ask a question in plain English. The AI writes **SQL**, our code checks it and runs it "

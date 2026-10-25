@@ -41,7 +41,7 @@ def run_app() -> AppTest:
 
 def test_all_three_tabs_render_without_errors():
     at = run_app()
-    assert [t.label for t in at.tabs] == ["Dashboard", "Forecast", "Ask the data"]
+    assert [t.label for t in at.tabs] == ["Dashboard", "Forecast", "Business case", "Ask the data"]
     assert at.metric[0].label == "Revenue" and at.metric[0].value.startswith("£")
     assert any("Read the South's growth with care" in w.value for w in at.warning)
 
@@ -109,3 +109,15 @@ def test_question_limit_disables_the_button():
     at.session_state["questions_asked"] = 10
     at.text_input[0].set_value("anything").run()
     assert at.button[0].disabled
+
+
+def test_business_case_tab_values_and_reacts_to_assumptions():
+    at = run_app()
+    point = at.dataframe[3].value  # regions, forecast, per-series, then the business case
+    assert list(point.index) == ["Promoted products", "Never-promoted products"]
+    promoted_saving = point.loc["Promoted products", "saving per year"]
+    assert promoted_saving > point.loc["Never-promoted products", "saving per year"] > 0
+    lost = next(s for s in at.slider if s.label.startswith("Share of a shortfall"))
+    lost.set_value(0.70).run()  # lose more of each shortfall -> bigger saving
+    assert at.dataframe[3].value.loc["Promoted products", "saving per year"] > promoted_saving
+    assert any("Recommendation" in i.value for i in at.info)
